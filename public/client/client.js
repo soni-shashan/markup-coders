@@ -865,7 +865,7 @@ document.addEventListener('click', function(event) {
 // Chat Widget Functionality
 class ChatWidget {
     constructor() {
-        this.webhookUrl = 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce/chat';
+        this.webhookUrl = 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce';
         this.isOpen = false;
         this.init();
     }

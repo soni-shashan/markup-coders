@@ -750,8 +750,8 @@ button:focus, input:focus, textarea:focus {
 /* Chat Widget Styles */
 .chat-widget {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 40px;
+    right: 40px;
     z-index: 1000;
     font-family: Arial, sans-serif;
 }
