@@ -272,6 +272,30 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     </div>
+    <!-- Chat Widget -->
+    <div id="chatWidget" class="chat-widget">
+        <div id="chatToggle" class="chat-toggle">
+            <span class="chat-icon">💬</span>
+            <span class="chat-text">Help</span>
+        </div>
+        <div id="chatContainer" class="chat-container">
+            <div class="chat-header">
+                <h3>🤖 Eye Coders Assistant</h3>
+                <button id="closeChatBtn" class="close-chat">×</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="bot-message">
+                    <div class="message-content">
+                        Hello! I'm your coding assistant. How can I help you today?
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="Ask me anything about coding..." />
+                <button id="sendChatBtn">Send</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Auto-save indicator -->
     <div id="autoSaveIndicator" class="auto-save-indicator">

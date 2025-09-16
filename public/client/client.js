@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeInterface();
     setupEventListeners();
     setupKeyboardShortcuts();
+    new ChatWidget();
 });
 
 async function initializeInterface() {
@@ -860,3 +861,158 @@ document.addEventListener('click', function(event) {
         closeRestoreModal();
     }
 });
+
+// Chat Widget Functionality
+class ChatWidget {
+    constructor() {
+        this.webhookUrl = 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce/chat';
+        this.isOpen = false;
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        const chatToggle = document.getElementById('chatToggle');
+        const closeChatBtn = document.getElementById('closeChatBtn');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const chatInput = document.getElementById('chatInput');
+
+        if (chatToggle) {
+            chatToggle.addEventListener('click', () => this.toggleChat());
+        }
+
+        if (closeChatBtn) {
+            closeChatBtn.addEventListener('click', () => this.closeChat());
+        }
+
+        if (sendChatBtn) {
+            sendChatBtn.addEventListener('click', () => this.sendMessage());
+        }
+
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.sendMessage();
+                }
+            });
+        }
+    }
+
+    toggleChat() {
+        const chatContainer = document.getElementById('chatContainer');
+        if (chatContainer) {
+            this.isOpen = !this.isOpen;
+            chatContainer.classList.toggle('active', this.isOpen);
+            
+            if (this.isOpen) {
+                document.getElementById('chatInput')?.focus();
+            }
+        }
+    }
+
+    closeChat() {
+        const chatContainer = document.getElementById('chatContainer');
+        if (chatContainer) {
+            this.isOpen = false;
+            chatContainer.classList.remove('active');
+        }
+    }
+
+    async sendMessage() {
+        const chatInput = document.getElementById('chatInput');
+        const message = chatInput?.value.trim();
+        
+        if (!message) return;
+
+        // Add user message to chat
+        this.addMessage(message, 'user');
+        chatInput.value = '';
+
+        // Show typing indicator
+        this.showTypingIndicator();
+
+        try {
+            // Send message to webhook
+            const response = await fetch(this.webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    timestamp: new Date().toISOString(),
+                    context: 'eye-coders-club'
+                })
+            });
+
+            const data = await response.json();
+            
+            // Remove typing indicator
+            this.removeTypingIndicator();
+
+            // Add bot response
+            if (data && data.response) {
+                this.addMessage(data.response, 'bot');
+            } else {
+                this.addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+            }
+
+        } catch (error) {
+            console.error('Chat error:', error);
+            this.removeTypingIndicator();
+            this.addMessage('Sorry, I\'m having trouble connecting. Please try again later.', 'bot');
+        }
+    }
+
+    addMessage(content, type) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `${type}-message`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = content;
+        
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    showTypingIndicator() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        
+        const dotsDiv = document.createElement('div');
+        dotsDiv.className = 'typing-dots';
+        
+        for (let i = 0; i < 3; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'typing-dot';
+            dotsDiv.appendChild(dot);
+        }
+        
+        typingDiv.appendChild(dotsDiv);
+        chatMessages.appendChild(typingDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    removeTypingIndicator() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+}
