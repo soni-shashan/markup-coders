@@ -285,7 +285,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 
 	createChat({
-		webhookUrl: 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce/chat'
+		webhookUrl: 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce/chat',
+        initialMessages: [
+		'Hi there! 👋',
+		'I Am Eye Coders Club Assistant, here to help you with HTML, CSS for markup mania.',
+	    ],
+        i18n: {
+		en: {
+			title: 'EYE CODERS CLUB',
+			subtitle: "Start a chat. We're here to help you 24/7.",
+			footer: '',
+			getStarted: 'New Conversation',
+			inputPlaceholder: 'Type your question..',
+		},
+	}
 	});
 </script>
 </body>
