@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eye Coders Club - Code Editor</title>
     <link rel="stylesheet" href="client.css">
+    <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
 </head>
 <body>
     <div class="container">
@@ -272,30 +273,6 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     </div>
-    <!-- Chat Widget -->
-    <div id="chatWidget" class="chat-widget">
-        <div id="chatToggle" class="chat-toggle">
-            <span class="chat-icon">💬</span>
-            <span class="chat-text">Help</span>
-        </div>
-        <div id="chatContainer" class="chat-container">
-            <div class="chat-header">
-                <h3>🤖 Eye Coders Assistant</h3>
-                <button id="closeChatBtn" class="close-chat">×</button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div class="bot-message">
-                    <div class="message-content">
-                        I'm Eye Coders Chat Bot, your markup maestro for the Markup Mania event! I'm here to dive into HTML and CSS fundamentals, answering your questions about tags like <div>, properties like margin, and values like flex. Let's explore the world of web structure and style together! What's your first HTML/CSS curiosity?
-                    </div>
-                </div>
-            </div>
-            <div class="chat-input-container">
-                <input type="text" id="chatInput" placeholder="Ask me anything about coding..." />
-                <button id="sendChatBtn">Send</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Auto-save indicator -->
     <div id="autoSaveIndicator" class="auto-save-indicator">
@@ -304,5 +281,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <script src="client.js"></script>
+    <script type="module">
+	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+
+	createChat({
+		webhookUrl: 'https://eyecoders-cse.app.n8n.cloud/webhook/c972c5e4-feb1-415f-9bb3-7ddccdde70ce/chat'
+	});
+</script>
 </body>
 </html>
