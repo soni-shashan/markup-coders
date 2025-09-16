@@ -371,7 +371,7 @@ header {
 /* Auto-save Indicator */
 .auto-save-indicator {
     position: fixed;
-    bottom: 20px;
+    top: 50px;
     right: 20px;
     background: #17a2b8;
     color: white;
