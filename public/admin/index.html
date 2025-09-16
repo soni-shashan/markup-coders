@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Coders Club - Admin Panel</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <img src="../assets/logo.png" alt="Eye Coders Club" class="logo">
+                <h1>Eye Coders Club - Admin Panel</h1>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('teams')">👥 Team Management</button>
+                <button class="tab-button" onclick="showTab('submissions')">📝 Submissions</button>
+                <button class="tab-button" onclick="window.open('/admin/submissions')">📁 View All Submissions</button>
+            </div>
+
+            <div id="teams" class="tab-content active">
+                <div class="section">
+                    <div class="section-header">
+                        <h2>Team Management</h2>
+                        <div class="section-actions">
+                            <a href="/seb-download" class="action-btn seb-btn" style="text-decoration: none;">
+                                🔐 Generate SEB Config
+                            </a>
+                            <button class="action-btn template-btn" onclick="downloadTemplate()">
+                                📄 Download Template
+                            </button>
+                            <button class="action-btn bulk-import-btn" onclick="showBulkImportModal()">
+                                📊 Bulk Import
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Single Team Form -->
+                    <div class="form-container">
+                        <h3>Add Single Team</h3>
+                        <form id="teamForm" class="team-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="teamName">Team Name:</label>
+                                    <input type="text" id="teamName" required placeholder="e.g., Alpha Coders">
+                                </div>
+                                <div class="form-group">
+                                    <label for="teamLeaderName">Team Leader Name:</label>
+                                    <input type="text" id="teamLeaderName" required placeholder="e.g., John Doe">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="studentId">Student ID:</label>
+                                    <input type="text" id="studentId" required placeholder="e.g., CS001">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email Address:</label>
+                                    <input type="email" id="email" required placeholder="e.g., john.doe@gmail.com">
+                                </div>
+                            </div>
+                            <button type="submit" class="submit-btn">➕ Add Team</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Registered Teams</h2>
+                    <div class="teams-summary">
+                        <div class="summary-card">
+                            <span class="summary-number" id="totalTeams">0</span>
+                            <span class="summary-label">Total Teams</span>
+                        </div>
+                        <div class="summary-card">
+                            <span class="summary-number" id="activeTeams">0</span>
+                            <span class="summary-label">Teams with Submissions</span>
+                        </div>
+                    </div>
+                    <div id="teamsTable" class="table-container">
+                        <!-- Teams will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="submissions" class="tab-content">
+                <div class="section">
+                    <h2>Recent Submissions</h2>
+                    <div id="submissionsTable" class="table-container">
+                        <!-- Submissions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Import Modal -->
+    <div id="bulkImportModal" class="bulk-import-modal">
+        <div class="bulk-import-modal-content">
+            <div class="bulk-import-header">
+                <h2>📊 Bulk Import Teams</h2>
+                <button class="close-modal" onclick="closeBulkImportModal()">×</button>
+            </div>
+            <div class="bulk-import-body">
+                <div class="import-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Download Template</h3>
+                            <p>Download the Excel template with the required format</p>
+                            <button class="template-download-btn" onclick="downloadTemplate()">
+                                📄 Download Template
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Fill Team Data</h3>
+                            <p>Fill in your team information in the Excel file</p>
+                            <div class="format-info">
+                                <strong>Required columns:</strong>
+                                <ul>
+                                    <li><strong>Team Name</strong> - must be unique</li>
+                                    <li><strong>Team Leader</strong> - full name</li>
+                                    <li><strong>Student ID</strong> - must be unique</li>
+                                    <li><strong>Email</strong> - must be unique, valid Gmail/email address</li>
+                                </ul>
+                                <div class="note">
+                                    <strong>Note:</strong> Teams will use Google OAuth with the provided email to login.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Upload File</h3>
+                            <p>Select and upload your completed Excel file</p>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('excelFileInput').click()">
+                                    <div class="upload-icon">📁</div>
+                                    <div class="upload-text">
+                                        <strong>Click to select Excel file</strong>
+                                        <br>or drag and drop here
+                                    </div>
+                                    <div class="upload-formats">Supports .xlsx and .xls files (max 5MB)</div>
+                                </div>
+                                <div class="selected-file" id="selectedFile" style="display: none;">
+                                    <div class="file-info">
+                                        <span class="file-name" id="fileName"></span>
+                                        <span class="file-size" id="fileSize"></span>
+                                    </div>
+                                    <button class="remove-file-btn" onclick="removeSelectedFile()">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bulk-import-actions">
+                <button class="cancel-btn" onclick="closeBulkImportModal()">Cancel</button>
+                <button class="import-btn" id="importBtn" onclick="startBulkImport()" disabled>
+                    📊 Import Teams
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Results Modal -->
+    <div id="importResultsModal" class="import-results-modal">
+        <div class="import-results-modal-content">
+            <div class="import-results-header">
+                <h2 id="resultsTitle">Import Results</h2>
+                <button class="close-modal" onclick="closeImportResultsModal()">×</button>
+            </div>
+            <div class="import-results-body">
+                <div class="results-summary" id="resultsSummary"></div>
+                <div class="results-details" id="resultsDetails"></div>
+            </div>
+            <div class="import-results-actions">
+                <button class="close-results-btn" onclick="closeImportResultsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="delete-modal">
+        <div class="delete-modal-content">
+            <div class="delete-header">
+                <h2>⚠️ Confirm Team Deletion</h2>
+                <button class="close-modal" onclick="closeDeleteModal()">×</button>
+            </div>
+            <div class="delete-body">
+                <div class="warning-message">
+                    <p><strong>Warning:</strong> This action cannot be undone!</p>
+                    <p>You are about to delete team <strong id="deleteTeamName"></strong> and all related data:</p>
+                </div>
+                
+                <div class="deletion-details" id="deletionDetails">
+                    <div class="detail-item">
+                        <span class="detail-icon">👥</span>
+                        <span class="detail-text">Team information</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">📝</span>
+                        <span class="detail-text">All submissions (<span id="submissionsCount">Loading...</span>)</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-icon">💾</span>
+                        <span class="detail-text">Auto-saved code (<span id="tempCodesCount">Loading...</span>)</span>
+                    </div>
+                </div>
+                
+                <div class="confirmation-input">
+                    <label for="confirmTeamName">Type the team name to confirm deletion:</label>
+                    <input type="text" id="confirmTeamName" placeholder="Enter team name exactly">
+                </div>
+            </div>
+            <div class="delete-actions">
+                <button class="cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+                <button class="confirm-delete-btn" id="confirmDeleteBtn" onclick="confirmTeamDeletion()" disabled>
+                    Delete Everything
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

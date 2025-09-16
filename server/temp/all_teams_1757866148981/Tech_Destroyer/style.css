@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+h1 {
+    text-align: center;
+    color: #fff;
+}
+
+p {
+    font-size: 18px;
+    text-align: center;
+}

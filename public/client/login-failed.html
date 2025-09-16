@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Failed - Eye Coders Club</title>
+    <link rel="stylesheet" href="client.css">
+</head>
+<body>
+    <div class="login-prompt">
+        <div class="login-content">
+            <img src="../assets/logo.png" alt="Eye Coders Club" class="login-logo">
+            <h2>❌ Login Failed</h2>
+            <p style="color: #dc3545; font-weight: 600;">Your email is not registered for this competition.</p>
+            <p>Please contact your administrator or try with a different Google account.</p>
+            <button class="google-login-btn" onclick="window.location.href='/auth/google'">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+                Try Again
+            </button>
+            <div class="login-note">
+                <p><strong>Note:</strong> Only pre-registered team members can access this platform.</p>
+                <p>Make sure you're using the same email address that was registered for your team.</p>
+                <p style="margin-top: 15px;"><strong>Need help?</strong> Contact your administrator with your email address.</p>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="start-fresh-btn" onclick="window.location.href='/admin'" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                    🛠️ Admin Panel
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

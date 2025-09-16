@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Submissions - Eye Coders Club</title>
+    <link rel="stylesheet" href="submissions.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+    <div class="header-content">
+        <div class="header-left">
+            <img src="../assets/logo.png" alt="Eye Coders Club" class="logo">
+            <h1>Team Submissions</h1>
+        </div>
+        <div class="header-actions">
+            <button id="downloadAllBtn" class="download-all-btn">📦 Download All Teams</button>
+            <a href="/admin" class="back-btn">← Back to Admin</a>
+        </div>
+    </div>
+</header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Teams</h3>
+                <div id="teamsList" class="teams-list">
+                    <!-- Teams will be loaded here -->
+                </div>
+            </div>
+
+            <div class="content-area">
+                <div id="submissionsContainer">
+                    <div class="welcome-message">
+                        <h2>Select a team to view submissions</h2>
+                        <p>Click on a team name from the left sidebar to see their submissions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading submissions...</p>
+        </div>
+    </div>
+
+    <script src="submissions.js"></script>
+</body>
+</html>

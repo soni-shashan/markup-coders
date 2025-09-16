@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Coders Club - Code Editor</title>
+    <link rel="stylesheet" href="client.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <img src="../assets/logo.png" alt="Eye Coders Club" class="logo">
+                <div class="team-info">
+                    <h1>Eye Coders Club</h1>
+                    <div id="teamDetails" class="team-details">
+                        <span id="teamName">Loading...</span>
+                        <span id="teamLeader">Leader: Loading...</span>
+                        <span id="studentId">ID: Loading...</span>
+                        <span id="pcIP">Email: Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="submitBtn" class="submit-btn" disabled>
+                    📤 Submit Code
+                </button>
+                <button class="logout-btn" onclick="logout()">
+                    🚪 Logout
+                </button>
+                <button id="exitBtn" class="submit-btn" 
+                        onclick="window.location.href = window.location.origin + '/exit'">
+                    🚪 Exit SEB
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <div class="editor-tabs">
+                    <div>
+                        <button class="tab-btn active" data-tab="html">HTML</button>
+                        <button class="tab-btn" data-tab="css">CSS</button>
+                        <button class="tab-btn" data-tab="js">JavaScript</button>
+                    </div>
+                    <div class="editor-info">
+                        <span class="shortcuts-hint" title="View keyboard shortcuts">⌨️ Shortcuts</span>
+                    </div>
+                </div>
+
+                <div class="editor-container">
+                    <div id="htmlEditor" class="editor active">
+                        <textarea id="htmlCode" class="code-textarea" placeholder="Write your HTML code here..." spellcheck="false"><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Project</title>
+</head>
+<body>
+    <h1>Hello, Eye Coders Club!</h1>
+    <p>Start coding your amazing project here.</p>
+</body>
+</html></textarea>
+                    </div>
+                    
+                    <div id="cssEditor" class="editor">
+                        <textarea id="cssCode" class="code-textarea" placeholder="Write your CSS code here..." spellcheck="false">body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+p {
+    font-size: 1.2em;
+    max-width: 600px;
+    line-height: 1.6;
+}</textarea>
+                    </div>
+                    
+                    <div id="jsEditor" class="editor">
+                        <textarea id="jsCode" class="code-textarea" placeholder="Write your JavaScript code here..." spellcheck="false">// Welcome to Eye Coders Club!
+console.log('Hello, Eye Coders Club!');
+
+// Add your JavaScript code here
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded successfully!');
+    
+    // Example: Add some interactivity
+    const h1 = document.querySelector('h1');
+    if (h1) {
+        h1.addEventListener('click', function() {
+            this.style.color = this.style.color === 'yellow' ? 'white' : 'yellow';
+        });
+    }
+});</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <div class="preview-header">
+                    <h3>🔍 Live Preview</h3>
+                </div>
+                <iframe id="preview" class="preview-frame"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading team information...</p>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcutsModal" class="shortcuts-modal">
+        <div class="shortcuts-modal-content">
+            <div class="shortcuts-header">
+                <h2>⌨️ Keyboard Shortcuts</h2>
+                <button class="close-modal" onclick="closeShortcutsModal()">×</button>
+            </div>
+            <div class="shortcuts-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-category">
+                        <h3>Basic Editing</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
+                            <span class="shortcut-desc">Undo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
+                            <span class="shortcut-desc">Redo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>X</kbd></span>
+                            <span class="shortcut-desc">Cut</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>C</kbd></span>
+                            <span class="shortcut-desc">Copy</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>V</kbd></span>
+                            <span class="shortcut-desc">Paste</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>A</kbd></span>
+                            <span class="shortcut-desc">Select All</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-category">
+                        <h3>Code Editing</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>/</kbd></span>
+                            <span class="shortcut-desc">Toggle Comment</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Tab</kbd></span>
+                            <span class="shortcut-desc">Indent</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Shift</kbd> + <kbd>Tab</kbd></span>
+                            <span class="shortcut-desc">Unindent</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>D</kbd></span>
+                            <span class="shortcut-desc">Duplicate Line</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>L</kbd></span>
+                            <span class="shortcut-desc">Select Line</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-category">
+                        <h3>Navigation</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Home</kbd></span>
+                            <span class="shortcut-desc">Go to Start</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>End</kbd></span>
+                            <span class="shortcut-desc">Go to End</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>←</kbd></span>
+                            <span class="shortcut-desc">Word Left</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>→</kbd></span>
+                            <span class="shortcut-desc">Word Right</span>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-category">
+                        <h3>Application</h3>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+                            <span class="shortcut-desc">Save (Submit)</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>F5</kbd></span>
+                            <span class="shortcut-desc">Refresh Preview</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>1/2/3</kbd></span>
+                            <span class="shortcut-desc">Switch Tabs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Code Modal -->
+    <div id="restoreModal" class="restore-modal">
+        <div class="restore-modal-content">
+            <div class="restore-header">
+                <h2>📁 Code Recovery Options</h2>
+                <button class="close-modal" onclick="closeRestoreModal()">×</button>
+            </div>
+            <div class="restore-body">
+                <p>We found saved code for your team. Which version would you like to load?</p>
+                
+                <div class="restore-options">
+                    <div class="restore-option" id="tempCodeOption">
+                        <div class="option-header">
+                            <h3>💾 Auto-Saved Code (Unsaved Changes)</h3>
+                            <span class="option-time" id="tempCodeTime"></span>
+                        </div>
+                        <div class="option-preview" id="tempCodePreview"></div>
+                        <button class="restore-btn temp-btn" onclick="restoreCode('temp')">
+                            Load Auto-Saved Code
+                        </button>
+                    </div>
+                    
+                    <div class="restore-option" id="submissionOption">
+                        <div class="option-header">
+                            <h3>✅ Latest Submission</h3>
+                            <span class="option-time" id="submissionTime"></span>
+                        </div>
+                        <div class="option-preview" id="submissionPreview"></div>
+                        <button class="restore-btn submission-btn" onclick="restoreCode('submission')">
+                            Load Latest Submission
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="restore-actions">
+                    <button class="start-fresh-btn" onclick="startFresh()">
+                        🆕 Start Fresh (Keep Default Code)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-save indicator -->
+    <div id="autoSaveIndicator" class="auto-save-indicator">
+        <span class="save-icon">💾</span>
+        <span class="save-text">Auto-saving...</span>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+</html>

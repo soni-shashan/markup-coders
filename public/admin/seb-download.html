@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEB Configuration Download - EyeCoders</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Keep your existing styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 5px;
+        }
+
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
+        .info-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #155724;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .btn-download {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-download:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #764ba2;
+        }
+
+        .back-link i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> SEB Config</h1>
+            <p>Generate Encrypted Safe Exam Browser Configuration</p>
+        </div>
+        
+        <div class="form-container">
+            <a href="/admin" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Admin Panel
+            </a>
+            
+            <div class="info-box">
+                <h3><i class="fas fa-info-circle"></i> Encrypted SEB Configuration</h3>
+                <ul>
+                    <li><strong>Entry Password:</strong> Used to encrypt the configuration file</li>
+                    <li><strong>Exit Password:</strong> Required to quit Safe Exam Browser</li>
+                    <li>Files are compressed with gzip and encrypted with RNCryptor</li>
+                    <li>Compatible with standard SEB decryption tools</li>
+                    <li>Both passwords must be at least 4 characters long</li>
+                </ul>
+            </div>
+            
+            <div class="warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Security Notice:</strong> Keep these passwords secure. Students should only receive the .seb file, not the passwords.
+            </div>
+            
+            <form id="sebForm">
+                <div class="form-group">
+                    <label for="entrypass">
+                        <i class="fas fa-key"></i> Entry Password (Encryption Key)
+                    </label>
+                    <div class="password-input-container">
+                        <input type="password" id="entrypass" name="entrypass" required 
+                               minlength="4" placeholder="Enter encryption password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('entrypass')">
+                            <i class="fas fa-eye" id="entrypass-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="exitpass">
+                        <i class="fas fa-lock"></i> Exit Password
+                    </label>
+                    <div class="password-input-container">
+                        <input type="password" id="exitpass" name="exitpass" required 
+                               minlength="4" placeholder="Enter exit password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('exitpass')">
+                            <i class="fas fa-eye" id="exitpass-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-download" id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    Generate & Download Encrypted SEB Config
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('sebForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const entrypass = document.getElementById('entrypass').value;
+            const exitpass = document.getElementById('exitpass').value;
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (!entrypass || !exitpass) {
+                alert('Please fill in both passwords');
+                return;
+            }
+            
+            if (entrypass.length < 4 || exitpass.length < 4) {
+                alert('Passwords must be at least 4 characters long');
+                return;
+            }
+            
+            // Disable button and show loading
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting & Compressing...';
+            
+            // Create download URL
+            const downloadUrl = `/seb?entrypass=${encodeURIComponent(entrypass)}&exitpass=${encodeURIComponent(exitpass)}`;
+            
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = 'eyecoders_exam.seb';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Reset button
+            setTimeout(() => {
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = '<i class="fas fa-download"></i> Generate & Download Encrypted SEB Config';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
