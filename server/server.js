@@ -582,8 +582,12 @@ app.get('/auth/google', passport.authenticate('google', {
 app.get('/auth/google/callback', 
     passport.authenticate('google', { failureRedirect: '/login-failed' }),
     (req, res) => {
-        console.log(`Successful OAuth callback for: ${req.user.teamName}`);
-        res.redirect('/client');
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+            }
+            res.redirect('/client');
+        });
     }
 );
 
