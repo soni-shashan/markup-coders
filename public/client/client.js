@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeInterface();
     setupEventListeners();
     setupKeyboardShortcuts();
+    
 });
 
 async function initializeInterface() {
