@@ -73,7 +73,6 @@ async function checkAuthenticationStatus() {
         
         const response = await fetch('/auth/status', {
             credentials: 'include',
-            cache: 'no-cache'
         });
         
         console.log('Response status:', response.status);
