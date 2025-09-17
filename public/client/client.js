@@ -21,28 +21,39 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     setupKeyboardShortcuts();
 });
-
 async function initializeInterface() {
     try {
         document.getElementById('loadingOverlay').style.display = 'flex';
         
+        console.log('Starting authentication check...');
+        
         // Check authentication status
         const authStatus = await checkAuthenticationStatus();
         
+        console.log('Auth Status Response:', authStatus);
+        console.log('Is Authenticated:', authStatus.authenticated);
+        console.log('Team Data:', authStatus.team);
+        
         if (!authStatus.authenticated) {
+            console.log('User not authenticated, showing login prompt');
             showLoginPrompt();
             return;
         }
         
         currentTeam = authStatus.team;
+        console.log('Current Team Set:', currentTeam);
         
         document.getElementById('loadingOverlay').style.display = 'none';
         
         if (currentTeam) {
+            console.log('Team found, updating display...');
             updateTeamDisplay();
             document.getElementById('submitBtn').disabled = false;
             await checkForRestoreData();
             startAutoSave();
+        } else {
+            console.error('No team data received despite authentication success');
+            showAlert('No team information found. Please contact administrator.', 'error');
         }
         
         initializeEditorHistory();
@@ -58,19 +69,65 @@ async function initializeInterface() {
 
 async function checkAuthenticationStatus() {
     try {
+        console.log('Making request to /auth/status...');
+        
         const response = await fetch('/auth/status', {
             credentials: 'include'
         });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const result = await response.json();
+        console.log('Raw server response:', result);
         
         if (result.success) {
             return result;
         } else {
-            throw new Error('Authentication check failed');
+            throw new Error(result.message || 'Authentication check failed');
         }
     } catch (error) {
         console.error('Auth status check error:', error);
         return { authenticated: false };
+    }
+}
+
+function updateTeamDisplay() {
+    console.log('updateTeamDisplay called with:', currentTeam);
+    
+    if (currentTeam) {
+        const teamNameEl = document.getElementById('teamName');
+        const teamLeaderEl = document.getElementById('teamLeader');
+        const studentIdEl = document.getElementById('studentId');
+        const pcIPEl = document.getElementById('pcIP');
+        
+        console.log('Team Name Element:', teamNameEl);
+        console.log('Team Leader Element:', teamLeaderEl);
+        console.log('Student ID Element:', studentIdEl);
+        console.log('PC IP Element:', pcIPEl);
+        
+        if (teamNameEl) {
+            teamNameEl.textContent = currentTeam.teamName || 'Unknown Team';
+            console.log('Set team name to:', teamNameEl.textContent);
+        }
+        if (teamLeaderEl) {
+            teamLeaderEl.textContent = `Leader: ${currentTeam.teamLeaderName || 'Unknown'}`;
+            console.log('Set team leader to:', teamLeaderEl.textContent);
+        }
+        if (studentIdEl) {
+            studentIdEl.textContent = `ID: ${currentTeam.studentId || 'Unknown'}`;
+            console.log('Set student ID to:', studentIdEl.textContent);
+        }
+        if (pcIPEl) {
+            pcIPEl.textContent = `Email: ${currentTeam.email || 'Unknown'}`;
+            console.log('Set email to:', pcIPEl.textContent);
+        }
+    } else {
+        console.error('No currentTeam data available for display');
     }
 }
 
@@ -109,14 +166,7 @@ function loginWithGoogle() {
     window.location.href = '/auth/google';
 }
 
-function updateTeamDisplay() {
-    if (currentTeam) {
-        document.getElementById('teamName').textContent = currentTeam.teamName;
-        document.getElementById('teamLeader').textContent = `Leader: ${currentTeam.teamLeaderName}`;
-        document.getElementById('studentId').textContent = `ID: ${currentTeam.studentId}`;
-        document.getElementById('pcIP').textContent = `Email: ${currentTeam.email}`;
-    }
-}
+
 
 function setupEventListeners() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
