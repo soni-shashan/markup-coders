@@ -72,14 +72,15 @@ async function handleTeamSubmit(event) {
     }
     
     try {
+        
         const response = await fetch('/api/admin/teams', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: await JSON.stringify(formData)
         });
-        
+        console.log(response.body);
         const result = await response.json();
         
         if (result.success) {
