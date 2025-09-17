@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="save-text">Auto-saving...</span>
     </div>
 
-    <script type="module" src="client.js"></script>
+    <script src="client.js"></script>
     <script type="module">
     import { currentTeam } from './client.js';
 	import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			getStarted: 'New Conversation',
 			inputPlaceholder: 'Type your question..',
 		},
-        chatSessionKey: currentTeam.studentId,
+        chatSessionKey: window.currentTeam.studentId,
 	}
 	});
 </script>

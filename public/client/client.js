@@ -34,7 +34,7 @@ async function initializeInterface() {
             return;
         }
         
-        currentTeam = authStatus.team;
+        window.currentTeam = authStatus.team;
         
         document.getElementById('loadingOverlay').style.display = 'none';
         
@@ -861,4 +861,3 @@ document.addEventListener('click', function(event) {
     }
 });
 
-export currentTeam;
