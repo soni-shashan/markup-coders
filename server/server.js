@@ -25,6 +25,7 @@ const Submission = require('./models/Submission');
 const TempCode = require('./models/TempCode');
 
 const app = express();
+app.use(express.json()); 
 const PORT = process.env.PORT || 3000;
 
 // Google OAuth Configuration
@@ -669,6 +670,7 @@ app.get('/seb-download', (req, res) => {
 
 // Admin Routes
 app.post('/api/admin/teams', async (req, res) => {
+    console.log("Incoming body:", req.body); 
     try {
         const { teamName, teamLeaderName, email, studentId } = req.body;
         
