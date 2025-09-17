@@ -15,7 +15,6 @@ let lastContent = {
     js: ''
 };
 
-import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 // Initialize client interface
 document.addEventListener('DOMContentLoaded', function() {
     initializeInterface();
