@@ -15,12 +15,30 @@ let lastContent = {
     js: ''
 };
 
+import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 // Initialize client interface
 document.addEventListener('DOMContentLoaded', function() {
     initializeInterface();
     setupEventListeners();
     setupKeyboardShortcuts();
-    
+
+	createChat({
+		webhookUrl: 'https://n8n.klevoradigital.in/webhook/fcf4fde7-6200-4a99-8b04-f7a9c3a4bed5/chat',
+        initialMessages: [
+		'Hi there! 👋',
+		'I Am Eye Coders Club Assistant, here to help you with HTML, CSS for markup mania.',
+	    ],
+        i18n: {
+		en: {
+			title: 'EYE CODERS CLUB',
+			subtitle: "Start a chat. We're here to help you 24/7.",
+			footer: '',
+			getStarted: 'New Conversation',
+			inputPlaceholder: 'Type your question..',
+            chatSessionKey:currentTeam.studentId,
+		},
+	}
+	});
 });
 
 async function initializeInterface() {
