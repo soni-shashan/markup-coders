@@ -41,9 +41,12 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
 
 // Middleware
 app.use(cors({
-    origin: true,
-    credentials: true
+    origin: ['https://markup-coders.klevoradigital.in/', 'http://localhost:3000'], // Add your production domain
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
@@ -55,7 +58,9 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Important for cross-site cookies
     }
 }));
 
@@ -63,11 +68,15 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+const API_BASE_URL = window.location.protocol === 'https:' 
+    ? window.location.origin 
+    : 'http://localhost:3000';
+
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: "https://markup-coders.klevoradigital.in/auth/google/callback"
+    callbackURL: `${API_BASE_URL}/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const email = profile.emails[0].value.toLowerCase();
