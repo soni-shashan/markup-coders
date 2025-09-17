@@ -41,8 +41,7 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
 
 // Middleware
 app.use(cors({
-    origin: ['https://markup-coders.klevoradigital.in/', 'http://localhost:3000'], // Add your production domain
-    credentials: true,
+    origin: ['*'], // Add your production domain
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
