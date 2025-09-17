@@ -699,7 +699,7 @@ app.post('/api/admin/teams', async (req, res) => {
             const value = error.keyValue[field];
             res.status(400).json({ 
                 success: false, 
-                message: `${field.charAt(0).toUpperCase() + field.slice(1)} '${value}' already exists ${res.body}` 
+                message: `${field.charAt(0).toUpperCase() + field.slice(1)} '${value}' already exists ${req.body}` 
             });
         } else {
             res.status(400).json({ success: false, message: error.message });

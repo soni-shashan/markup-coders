@@ -80,7 +80,6 @@ async function handleTeamSubmit(event) {
             },
             body: await JSON.stringify(formData)
         });
-        console.log(response.body);
         const result = await response.json();
         
         if (result.success) {
