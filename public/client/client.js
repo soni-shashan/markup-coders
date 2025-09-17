@@ -34,7 +34,7 @@ async function initializeInterface() {
             return;
         }
         
-        currentTeam = authStatus.team;
+        currentTeam = await authStatus.team;
         
         document.getElementById('loadingOverlay').style.display = 'none';
         
