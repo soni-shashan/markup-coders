@@ -670,9 +670,8 @@ app.get('/seb-download', (req, res) => {
 
 // Admin Routes
 app.post('/api/admin/teams', async (req, res) => {
-    console.log("Incoming body:", req.body); 
     try {
-        const { teamName, teamLeaderName, email, studentId } = req.body;
+        const { teamName, teamLeaderName,studentId, email } = req.body;
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
