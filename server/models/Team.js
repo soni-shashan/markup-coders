@@ -44,6 +44,9 @@ const teamSchema = new mongoose.Schema({
   profilePicture: {
     type: String
   },
+  assignedImage: {
+     type: String 
+  },
   createdAt: {
     type: Date,
     default: Date.now

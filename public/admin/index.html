@@ -52,6 +52,16 @@
                                     <label for="teamLeaderName">Team Leader Name:</label>
                                     <input type="text" id="teamLeaderName" required placeholder="e.g., John Doe">
                                 </div>
+                                <div class="form-group">
+                                    <label for="assignedImage">Assigned Image:</label>
+                                    <select id="assignedImage" required>
+                                        <option value="">Select an image...</option>
+                                        <!-- Images will be loaded dynamically -->
+                                    </select>
+                                    <div class="image-preview" id="imagePreview" style="display: none;">
+                                        <img id="previewImg" src="" alt="Preview" style="max-width: 100px; max-height: 100px; margin-top: 10px;">
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">

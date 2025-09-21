@@ -6,9 +6,17 @@ let currentTeamToDelete = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadTeams();
     loadSubmissions();
+    loadAvailableImages(); 
     
     document.getElementById('teamForm').addEventListener('submit', handleTeamSubmit);
     
+    const imageSelect = document.getElementById('assignedImage');
+    if (imageSelect) {
+        imageSelect.addEventListener('change', function() {
+            showImagePreview(this.value);
+        });
+    }
+
     // Setup confirmation input listener
     const confirmInput = document.getElementById('confirmTeamName');
     if (confirmInput) {
@@ -48,6 +56,43 @@ function showTab(tabName) {
     }
 }
 
+async function loadAvailableImages() {
+    try {
+        const response = await fetch('/api/admin/available-images');
+        const result = await response.json();
+        
+        if (result.success) {
+            const imageSelect = document.getElementById('assignedImage');
+            if (imageSelect) {
+                // Clear existing options except the first one
+                imageSelect.innerHTML = '<option value="">Select an image...</option>';
+                
+                result.images.forEach(image => {
+                    const option = document.createElement('option');
+                    option.value = image;
+                    option.textContent = image.replace(/\.[^/.]+$/, ""); // Remove extension for display
+                    imageSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading images:', error);
+    }
+}
+
+function showImagePreview(imageName) {
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (imageName && preview && previewImg) {
+        previewImg.src = `/images/${imageName}`;
+        preview.style.display = 'block';
+    } else if (preview) {
+        preview.style.display = 'none';
+    }
+}
+
+
 async function handleTeamSubmit(event) {
     event.preventDefault();
     
@@ -55,7 +100,8 @@ async function handleTeamSubmit(event) {
         teamName: document.getElementById('teamName').value.trim(),
         teamLeaderName: document.getElementById('teamLeaderName').value.trim(),
         studentId: document.getElementById('studentId').value.trim(),
-        email: document.getElementById('email').value.trim().toLowerCase()
+        email: document.getElementById('email').value.trim().toLowerCase(),
+        assignedImage: document.getElementById('assignedImage').value 
     };
     
     // Validate email format on frontend
@@ -157,6 +203,7 @@ function renderTeamsTable() {
                     <th>Student ID</th>
                     <th>Email</th>
                     <th>Created At</th>
+                    <th>Assigned Image</th>
                     <th>Last Login</th>
                     <th>Status</th>
                     <th>Submissions</th>
@@ -183,6 +230,14 @@ function renderTeamsTable() {
                                 <div class="email-cell">
                                     <span>${team.email}</span>
                                     ${team.profilePicture ? `<img src="${team.profilePicture}" class="profile-pic" alt="Profile">` : ''}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="assigned-image-cell">
+                                    ${team.assignedImage ? `
+                                        <img src="/images/${team.assignedImage}" alt="Assigned" class="assigned-image-thumb" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        <span class="image-name">${team.assignedImage}</span>
+                                    ` : 'No image'}
                                 </div>
                             </td>
                             <td><span class="date">${new Date(team.createdAt).toLocaleDateString()}</span></td>

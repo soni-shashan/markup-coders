@@ -23,6 +23,9 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button id="showImageBtn" class="show-image-btn" disabled>
+                    🖼️ Show Image (<span id="imageButtonCountdown">30:00</span>)
+                </button>
                 <button id="submitBtn" class="submit-btn" disabled>
                     📤 Submit Code
                 </button>
@@ -275,6 +278,29 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="save-icon">💾</span>
         <span class="save-text">Auto-saving...</span>
     </div>
+
+    <div id="imageModal" class="image-modal">
+    <div class="image-modal-content">
+        <div class="image-header">
+            <h2>📷 Reference Image</h2>
+            <div class="image-countdown">
+                <span id="imageCountdown">5:00</span>
+            </div>
+        </div>
+        <div class="image-body">
+            <img id="displayImage" src="" alt="Reference Image" class="reference-image">
+        </div>
+    </div>
+    <div class="image-overlay-message" id="imageOverlayMessage">
+        <div class="overlay-content">
+            <h3>🔒 Coding Disabled</h3>
+            <p>Please view the reference image. You can start coding when the timer ends.</p>
+            <div class="countdown-display">
+                <span id="overlayCountdown">5:00</span>
+            </div>
+        </div>
+    </div>
+</div>
     <script src="client.js"></script>
     
     <script type="module">
