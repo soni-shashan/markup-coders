@@ -48,7 +48,8 @@ async function initializeInterface() {
         if (currentTeam) {
             console.log('Team found, updating display...');
             updateTeamDisplay();
-            document.getElementById('submitBtn').disabled = false;
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) submitBtn.disabled = false;
             await checkForRestoreData();
             startAutoSave();
         } else {
@@ -314,7 +315,8 @@ function setupEventListeners() {
         });
     });
     
-    document.getElementById('submitBtn').addEventListener('click', submitCode);
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', submitCode);
     
     const shortcutsHint = document.querySelector('.shortcuts-hint');
     if (shortcutsHint) {
@@ -347,8 +349,11 @@ function setupKeyboardShortcuts() {
             switch(e.key.toLowerCase()) {
                 case 's':
                     e.preventDefault();
-                    if (currentTeam && !document.getElementById('submitBtn').disabled) {
-                        submitCode();
+                    if (currentTeam) {
+                        const submitBtn = document.getElementById('submitBtn');
+                        if (submitBtn && !submitBtn.disabled) {
+                            submitCode();
+                        }
                     }
                     break;
                 case '1':
@@ -950,8 +955,11 @@ async function submitCode() {
     }
     
     try {
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').textContent = 'Submitting...';
+        const submitBtnEl = document.getElementById('submitBtn');
+        if (submitBtnEl) {
+            submitBtnEl.disabled = true;
+            submitBtnEl.textContent = 'Submitting...';
+        }
         
         const response = await fetch('/api/client/submit', {
             method: 'POST',
@@ -986,8 +994,11 @@ async function submitCode() {
     } catch (error) {
         showAlert('Error submitting code: ' + error.message, 'error');
     } finally {
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').textContent = 'Submit Code';
+        const submitBtnEl = document.getElementById('submitBtn');
+        if (submitBtnEl) {
+            submitBtnEl.disabled = false;
+            submitBtnEl.textContent = 'Submit Code';
+        }
     }
 }
 
