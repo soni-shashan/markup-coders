@@ -507,8 +507,7 @@ function extractTeamData(row, rowNumber) {
         teamName: null,
         teamLeaderName: null,
         studentId: null,
-        email: null,
-        assignedImage: null
+        email: null
     };
 
     try {
@@ -516,8 +515,7 @@ function extractTeamData(row, rowNumber) {
             teamName: ['team_name', 'teamname', 'team name', 'name', 'Team Name', 'Team_Name'],
             teamLeaderName: ['team_leader', 'leader', 'team_leader_name', 'leader_name', 'Team Leader', 'Team Leader Name'],
             studentId: ['student_id', 'studentid', 'id', 'Student ID', 'Student_ID', 'roll_no', 'Roll No'],
-            email: ['email', 'email_address', 'Email', 'Email Address', 'Email_Address', 'gmail', 'Gmail'],
-            assignedImage: ['assigned_image', 'image', 'Image', 'Assigned Image', 'assigned_image_name']
+            email: ['email', 'email_address', 'Email', 'Email Address', 'Email_Address', 'gmail', 'Gmail']
         };
 
         for (const [field, possibleColumns] of Object.entries(columnMappings)) {
@@ -551,7 +549,6 @@ function extractTeamData(row, rowNumber) {
         if (!result.teamLeaderName) missingFields.push('Team Leader');
         if (!result.studentId) missingFields.push('Student ID');
         if (!result.email) missingFields.push('Email');
-        if (!result.assignedImage) missingFields.push('Assigned Image'); 
 
         if (missingFields.length > 0) {
             result.error = `Missing required fields: ${missingFields.join(', ')}. Available columns: ${Object.keys(row).join(', ')}`;
@@ -899,22 +896,19 @@ app.get('/api/admin/download-template', (req, res) => {
                 'Team Name': 'Alpha Coders',
                 'Team Leader': 'John Doe',
                 'Student ID': 'CS001',
-                'Email': 'john.doe@gmail.com',
-                'Assigned Image': 'image1.jpg' 
+                'Email': 'john.doe@gmail.com'
             },
             {
                 'Team Name': 'Beta Developers',
                 'Team Leader': 'Jane Smith',
                 'Student ID': 'CS002',
-                'Email': 'jane.smith@gmail.com',
-                'Assigned Image': 'image2.jpg' 
+                'Email': 'jane.smith@gmail.com'
             },
             {
                 'Team Name': 'Gamma Tech',
                 'Team Leader': 'Bob Johnson',
                 'Student ID': 'CS003',
-                'Email': 'bob.johnson@gmail.com',
-                'Assigned Image': 'image1.jpg' 
+                'Email': 'bob.johnson@gmail.com'
             }
         ];
 
@@ -1323,112 +1317,6 @@ app.get('/', (req, res) => {
 app.get('/client', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/client/index.html'));
 });
-
-// Add this endpoint to get available images
-app.get('/api/admin/available-images', (req, res) => {
-    try {
-        const imagesDir = path.join(__dirname, '../public/images');
-        
-        if (!fs.existsSync(imagesDir)) {
-            return res.json({ success: true, images: [] });
-        }
-        
-        const files = fs.readdirSync(imagesDir);
-        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-        
-        const images = files.filter(file => {
-            const ext = path.extname(file).toLowerCase();
-            return imageExtensions.includes(ext);
-        });
-        
-        res.json({ success: true, images });
-    } catch (error) {
-        console.error('Error loading images:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Update the team creation endpoint to include assignedImage
-app.post('/api/admin/teams', async (req, res) => {
-    try {
-        const { teamName, teamLeaderName, studentId, email, assignedImage } = req.body;
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Invalid email format' 
-            });
-        }
-        
-        const team = new Team({
-            teamName: teamName.trim(),
-            teamLeaderName: teamLeaderName.trim(),
-            email: email.toLowerCase().trim(),
-            studentId: studentId.trim(),
-            assignedImage: assignedImage // Add this line
-        });
-        
-        await team.save();
-        console.log(`New team created: ${team.teamName} (${team.email}) - Image: ${team.assignedImage}`);
-        res.json({ success: true, message: 'Team created successfully', team });
-    } catch (error) {
-        console.error('Error creating team:', error);
-        if (error.code === 11000) {
-            const field = Object.keys(error.keyPattern)[0];
-            const value = error.keyValue[field];
-            res.status(400).json({ 
-                success: false, 
-                message: `${field.charAt(0).toUpperCase() + field.slice(1)} '${value}' already exists` 
-            });
-        } else {
-            res.status(400).json({ success: false, message: error.message });
-        }
-    }
-});
-
-// Add endpoint to check first login
-app.get('/api/client/check-first-login', requireAuth, async (req, res) => {
-    try {
-        // Check if user has any previous sessions or submissions
-        const hasSubmissions = await Submission.findOne({ teamName: req.user.teamName });
-        const hasTempCode = await TempCode.findOne({ teamName: req.user.teamName });
-        
-        // Consider it first login if no submissions and no temp code, and lastLogin is recent (within 1 minute)
-        const isFirstLogin = !hasSubmissions && !hasTempCode && 
-            (!req.user.lastLogin || (new Date() - new Date(req.user.lastLogin)) < 60000);
-        
-        res.json({ success: true, isFirstLogin });
-    } catch (error) {
-        console.error('Error checking first login:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-
-// Update auth status endpoint to include assigned image
-app.get('/auth/status', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.json({
-            success: true,
-            authenticated: true,
-            team: {
-                teamName: req.user.teamName,
-                teamLeaderName: req.user.teamLeaderName,
-                email: req.user.email,
-                studentId: req.user.studentId,
-                profilePicture: req.user.profilePicture,
-                assignedImage: req.user.assignedImage // Add this line
-            }
-        });
-    } else {
-        res.json({
-            success: true,
-            authenticated: false
-        });
-    }
-});
-
 
 // Catch-all route
 app.get('*', (req, res) => {

@@ -6,17 +6,9 @@ let currentTeamToDelete = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadTeams();
     loadSubmissions();
-    loadAvailableImages(); 
     
     document.getElementById('teamForm').addEventListener('submit', handleTeamSubmit);
     
-    const imageSelect = document.getElementById('assignedImage');
-    if (imageSelect) {
-        imageSelect.addEventListener('change', function() {
-            showImagePreview(this.value);
-        });
-    }
-
     // Setup confirmation input listener
     const confirmInput = document.getElementById('confirmTeamName');
     if (confirmInput) {
@@ -56,21 +48,6 @@ function showTab(tabName) {
     }
 }
 
-
-
-function showImagePreview(imageName) {
-    const preview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    
-    if (imageName && preview && previewImg) {
-        previewImg.src = `/images/${imageName}`;
-        preview.style.display = 'block';
-    } else if (preview) {
-        preview.style.display = 'none';
-    }
-}
-
-
 async function handleTeamSubmit(event) {
     event.preventDefault();
     
@@ -78,8 +55,7 @@ async function handleTeamSubmit(event) {
         teamName: document.getElementById('teamName').value.trim(),
         teamLeaderName: document.getElementById('teamLeaderName').value.trim(),
         studentId: document.getElementById('studentId').value.trim(),
-        email: document.getElementById('email').value.trim().toLowerCase(),
-        assignedImage: document.getElementById('assignedImage').value 
+        email: document.getElementById('email').value.trim().toLowerCase()
     };
     
     // Validate email format on frontend
@@ -181,7 +157,6 @@ function renderTeamsTable() {
                     <th>Student ID</th>
                     <th>Email</th>
                     <th>Created At</th>
-                    <th>Assigned Image</th>
                     <th>Last Login</th>
                     <th>Status</th>
                     <th>Submissions</th>
@@ -208,14 +183,6 @@ function renderTeamsTable() {
                                 <div class="email-cell">
                                     <span>${team.email}</span>
                                     ${team.profilePicture ? `<img src="${team.profilePicture}" class="profile-pic" alt="Profile">` : ''}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="assigned-image-cell">
-                                    ${team.assignedImage ? `
-                                        <img src="/images/${team.assignedImage}" alt="Assigned" class="assigned-image-thumb" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                                        <span class="image-name">${team.assignedImage}</span>
-                                    ` : 'No image'}
                                 </div>
                             </td>
                             <td><span class="date">${new Date(team.createdAt).toLocaleDateString()}</span></td>
@@ -800,76 +767,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// Show loading state while images are being loaded
-function showImageLoadingState() {
-    const imageSelect = document.getElementById('assignedImage');
-    if (imageSelect) {
-        imageSelect.innerHTML = '<option value="">Loading images...</option>';
-        imageSelect.disabled = true;
-    }
-}
-
-// Show error state if images fail to load
-function showImageErrorState(error) {
-    const imageSelect = document.getElementById('assignedImage');
-    if (imageSelect) {
-        imageSelect.innerHTML = `
-            <option value="">Error loading images</option>
-            <option value="" disabled>Please check server logs</option>
-        `;
-        imageSelect.disabled = false;
-    }
-    console.error('Image loading error:', error);
-}
-
-// Update loadAvailableImages with better error handling
-// Load available images from the server
-async function loadAvailableImages() {
-    try {
-        console.log('Loading available images...');
-        
-        const response = await fetch('/api/admin/available-images');
-        const result = await response.json();
-        
-        console.log('Images API response:', result);
-        
-        if (result.success && result.images) {
-            const imageSelect = document.getElementById('assignedImage');
-            if (imageSelect) {
-                // Clear existing options
-                imageSelect.innerHTML = '';
-                
-                // Add default option
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select an image...';
-                imageSelect.appendChild(defaultOption);
-                
-                // Add image options
-                result.images.forEach(image => {
-                    const option = document.createElement('option');
-                    option.value = image;
-                    option.textContent = image;
-                    imageSelect.appendChild(option);
-                });
-                
-                console.log(`Successfully loaded ${result.images.length} images`);
-                
-                if (result.images.length === 0) {
-                    showAlert('No images found in /public/images/ directory', 'warning');
-                }
-            } else {
-                console.error('assignedImage select element not found');
-            }
-        } else {
-            console.error('Failed to load images:', result);
-            showAlert('Failed to load images: ' + (result.message || 'Unknown error'), 'error');
-        }
-    } catch (error) {
-        console.error('Error loading images:', error);
-        showAlert('Error loading images: ' + error.message, 'error');
-    }
-}
-
-
