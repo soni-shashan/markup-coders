@@ -70,6 +70,7 @@ async function loadAvailableImages() {
                 result.images.forEach(image => {
                     const option = document.createElement('option');
                     option.value = image;
+                    console.log(image);
                     option.textContent = image.replace(/\.[^/.]+$/, ""); // Remove extension for display
                     imageSelect.appendChild(option);
                 });
