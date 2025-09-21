@@ -56,30 +56,7 @@ function showTab(tabName) {
     }
 }
 
-async function loadAvailableImages() {
-    try {
-        const response = await fetch('/api/admin/available-images');
-        const result = await response.json();
-        
-        if (result.success) {
-            const imageSelect = document.getElementById('assignedImage');
-            if (imageSelect) {
-                // Clear existing options except the first one
-                imageSelect.innerHTML = '<option value="">Select an image...</option>';
-                
-                result.images.forEach(image => {
-                    const option = document.createElement('option');
-                    option.value = image;
-                    console.log(image);
-                    option.textContent = image.replace(/\.[^/.]+$/, ""); // Remove extension for display
-                    imageSelect.appendChild(option);
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error loading images:', error);
-    }
-}
+
 
 function showImagePreview(imageName) {
     const preview = document.getElementById('imagePreview');
@@ -847,67 +824,52 @@ function showImageErrorState(error) {
 }
 
 // Update loadAvailableImages with better error handling
+// Load available images from the server
 async function loadAvailableImages() {
-    showImageLoadingState();
-    
     try {
         console.log('Loading available images...');
         
         const response = await fetch('/api/admin/available-images');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
         const result = await response.json();
+        
         console.log('Images API response:', result);
         
-        const imageSelect = document.getElementById('assignedImage');
-        if (!imageSelect) {
-            console.error('Image select element not found');
-            return;
-        }
-        
-        // Enable the select
-        imageSelect.disabled = false;
-        
-        if (result.success) {
-            // Clear existing options
-            imageSelect.innerHTML = '<option value="">Select an image...</option>';
-            
-            if (result.images && result.images.length > 0) {
+        if (result.success && result.images) {
+            const imageSelect = document.getElementById('assignedImage');
+            if (imageSelect) {
+                // Clear existing options
+                imageSelect.innerHTML = '';
+                
+                // Add default option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select an image...';
+                imageSelect.appendChild(defaultOption);
+                
+                // Add image options
                 result.images.forEach(image => {
                     const option = document.createElement('option');
                     option.value = image;
-                    // Show filename and extension for clarity
                     option.textContent = image;
                     imageSelect.appendChild(option);
                 });
                 
                 console.log(`Successfully loaded ${result.images.length} images`);
                 
-                // Show success message
-                if (result.count === 0) {
-                    showAlert('No images found. Please add images to /public/images/ directory', 'warning');
+                if (result.images.length === 0) {
+                    showAlert('No images found in /public/images/ directory', 'warning');
                 }
             } else {
-                // Add message when no images found
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = 'No images found - Add images to /public/images/';
-                option.disabled = true;
-                imageSelect.appendChild(option);
-                
-                showAlert('No images found in /public/images/ directory. Please add some images first.', 'warning');
+                console.error('assignedImage select element not found');
             }
         } else {
-            throw new Error(result.message || 'Failed to load images');
+            console.error('Failed to load images:', result);
+            showAlert('Failed to load images: ' + (result.message || 'Unknown error'), 'error');
         }
-        
     } catch (error) {
         console.error('Error loading images:', error);
-        showImageErrorState(error);
-        showAlert(`Error loading images: ${error.message}. Please check if /public/images/ directory exists and contains image files.`, 'error');
+        showAlert('Error loading images: ' + error.message, 'error');
     }
 }
+
 

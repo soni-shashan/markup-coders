@@ -49,6 +49,9 @@ async function initializeInterface() {
             console.log('Team found, updating display...');
             updateTeamDisplay();
             document.getElementById('submitBtn').disabled = false;
+            setTimeout(() => {
+                initializeImageSystem();
+            }, 1000);
             await checkForRestoreData();
             startAutoSave();
         } else {
@@ -921,179 +924,161 @@ let imageTimer = {
     currentImageInterval: null,
     buttonCountdownInterval: null
 };
-
-// Update the initializeInterface function
-async function initializeInterface() {
+// Fixed image system initialization
+async function initializeImageSystem() {
     try {
-        document.getElementById('loadingOverlay').style.display = 'flex';
+        console.log('Initializing image system for team:', currentTeam);
         
-        console.log('Starting authentication check...');
-        
-        const authStatus = await checkAuthenticationStatus();
-        
-        console.log('Auth Status Response:', authStatus);
-        console.log('Is Authenticated:', authStatus.authenticated);
-        console.log('Team Data:', authStatus.team);
-        
-        if (!authStatus.authenticated) {
-            console.log('User not authenticated, showing login prompt');
-            showLoginPrompt();
+        if (!currentTeam || !currentTeam.assignedImage) {
+            console.log('No image assigned to this team');
+            const showImageBtn = document.getElementById('showImageBtn');
+            if (showImageBtn) {
+                showImageBtn.style.display = 'none';
+            }
             return;
         }
         
-        currentTeam = authStatus.team;
-        console.log('Current Team Set:', currentTeam);
+        console.log('Team has assigned image:', currentTeam.assignedImage);
         
-        document.getElementById('loadingOverlay').style.display = 'none';
+        // Setup show image button first
+        setupShowImageButton();
         
-        if (currentTeam) {
-            console.log('Team found, updating display...');
-            updateTeamDisplay();
-            document.getElementById('submitBtn').disabled = false;
-            
-            // Initialize image system
-            await initializeImageSystem();
-            
-            await checkForRestoreData();
-            startAutoSave();
-        } else {
-            console.error('No team data received despite authentication success');
-            showAlert('No team information found. Please contact administrator.', 'error');
-        }
-        
-        initializeEditorHistory();
-        runCode();
-        
-    } catch (error) {
-        console.error('Initialization error:', error);
-        showAlert('Error loading team information: ' + error.message, 'error');
-        document.getElementById('loadingOverlay').style.display = 'none';
-        showLoginPrompt();
-    }
-}
-
-// Add these new functions
-async function initializeImageSystem() {
-    try {
         // Check if this is first login
         const isFirstLogin = await checkFirstLogin();
+        console.log('Is first login:', isFirstLogin);
         
         if (isFirstLogin) {
-            // Show image for 5 minutes on first login
-            await showImageForDuration(5 * 60 * 1000, true); // 5 minutes in milliseconds
+            console.log('Showing image for first login (5 minutes)');
+            setTimeout(() => {
+                showImageForDuration(5 * 60, true); // 5 minutes, disable editor
+            }, 500);
         }
-        
-        // Initialize show image button
-        setupShowImageButton();
         
     } catch (error) {
         console.error('Error initializing image system:', error);
     }
 }
 
-async function checkFirstLogin() {
-    try {
-        const response = await fetch('/api/client/check-first-login', {
-            credentials: 'include'
-        });
-        const result = await response.json();
-        return result.isFirstLogin;
-    } catch (error) {
-        console.error('Error checking first login:', error);
-        return false;
-    }
-}
-
-function setupShowImageButton() {
-    const showImageBtn = document.getElementById('showImageBtn');
-    if (showImageBtn) {
-        showImageBtn.addEventListener('click', handleShowImageClick);
-        
-        // Start 30-minute countdown
-        startButtonCountdown(30 * 60); // 30 minutes in seconds
-    }
-}
-
-function handleShowImageClick() {
-    const showImageBtn = document.getElementById('showImageBtn');
-    if (showImageBtn.disabled) return;
-    
-    // Show image for 2 minutes
-    showImageForDuration(2 * 60 * 1000, false); // 2 minutes in milliseconds
-    
-    // Disable button for 30 minutes
-    disableButtonForDuration(30 * 60); // 30 minutes in seconds
-}
-
-async function showImageForDuration(duration, disableEditor = false) {
+// Fixed show image for duration function
+function showImageForDuration(durationInSeconds, disableEditor = false) {
     try {
         if (!currentTeam || !currentTeam.assignedImage) {
+            console.log('No image assigned to team');
             showAlert('No image assigned to your team', 'error');
             return;
         }
+        
+        console.log(`Showing image for ${durationInSeconds} seconds, disable editor: ${disableEditor}`);
         
         const modal = document.getElementById('imageModal');
         const displayImage = document.getElementById('displayImage');
         const overlayMessage = document.getElementById('imageOverlayMessage');
         const editorContainer = document.querySelector('.main-content');
         
-        if (!modal || !displayImage) return;
+        if (!modal || !displayImage) {
+            console.error('Image modal elements not found');
+            return;
+        }
         
         // Set image source
         displayImage.src = `/images/${currentTeam.assignedImage}`;
+        console.log('Setting image src to:', displayImage.src);
+        
+        // Handle image load events
+        displayImage.onload = function() {
+            console.log('Image loaded successfully');
+        };
+        
+        displayImage.onerror = function() {
+            console.error('Failed to load image:', currentTeam.assignedImage);
+            showAlert(`Failed to load assigned image: ${currentTeam.assignedImage}`, 'error');
+            hideImage();
+            return;
+        };
         
         // Show modal
         modal.style.display = 'block';
         imageTimer.isImageVisible = true;
         
-        // Show overlay and disable editor if it's first login
+        // Show overlay and disable editor if needed
         if (disableEditor) {
             overlayMessage.style.display = 'flex';
             editorContainer.classList.add('editor-disabled');
+            console.log('Editor disabled for viewing');
         } else {
             overlayMessage.style.display = 'none';
         }
         
         // Start countdown
-        startImageCountdown(Math.floor(duration / 1000));
+        startImageCountdown(durationInSeconds);
         
         // Auto-hide after duration
         setTimeout(() => {
+            console.log('Auto-hiding image after duration');
             hideImage();
             if (disableEditor) {
                 editorContainer.classList.remove('editor-disabled');
+                console.log('Editor re-enabled');
             }
-        }, duration);
+        }, durationInSeconds * 1000);
         
     } catch (error) {
         console.error('Error showing image:', error);
+        showAlert('Error displaying image: ' + error.message, 'error');
     }
 }
 
-function startImageCountdown(seconds) {
+// Fixed countdown function
+function startImageCountdown(totalSeconds) {
+    console.log('Starting image countdown for', totalSeconds, 'seconds');
+    
     const countdownElement = document.getElementById('imageCountdown');
     const overlayCountdownElement = document.getElementById('overlayCountdown');
     
+    if (!countdownElement && !overlayCountdownElement) {
+        console.error('Countdown elements not found');
+        return;
+    }
+    
+    // Clear any existing interval
     if (imageTimer.currentImageInterval) {
         clearInterval(imageTimer.currentImageInterval);
     }
     
+    let remainingSeconds = totalSeconds;
+    
+    // Update countdown immediately
+    updateCountdownDisplay(remainingSeconds, countdownElement, overlayCountdownElement);
+    
+    // Start interval
     imageTimer.currentImageInterval = setInterval(() => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+        remainingSeconds--;
+        console.log('Countdown:', remainingSeconds);
         
-        if (countdownElement) countdownElement.textContent = timeString;
-        if (overlayCountdownElement) overlayCountdownElement.textContent = timeString;
+        updateCountdownDisplay(remainingSeconds, countdownElement, overlayCountdownElement);
         
-        seconds--;
-        
-        if (seconds < 0) {
+        if (remainingSeconds <= 0) {
             clearInterval(imageTimer.currentImageInterval);
+            console.log('Countdown finished');
         }
     }, 1000);
 }
 
+// Helper function to update countdown display
+function updateCountdownDisplay(seconds, countdownElement, overlayCountdownElement) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    if (countdownElement) {
+        countdownElement.textContent = timeString;
+    }
+    if (overlayCountdownElement) {
+        overlayCountdownElement.textContent = timeString;
+    }
+}
+
+// Fixed hide image function
 function hideImage() {
     const modal = document.getElementById('imageModal');
     if (modal) {
@@ -1104,44 +1089,118 @@ function hideImage() {
     
     if (imageTimer.currentImageInterval) {
         clearInterval(imageTimer.currentImageInterval);
+        imageTimer.currentImageInterval = null;
     }
 }
 
+// Fixed setup show image button
+function setupShowImageButton() {
+    const showImageBtn = document.getElementById('showImageBtn');
+    if (showImageBtn) {
+        if (currentTeam && currentTeam.assignedImage) {
+            showImageBtn.style.display = 'inline-block';
+            
+            // Remove any existing event listeners
+            showImageBtn.removeEventListener('click', handleShowImageClick);
+            showImageBtn.addEventListener('click', handleShowImageClick);
+            
+            // Start 30-minute countdown
+            startButtonCountdown(30 * 60); // 30 minutes in seconds
+            console.log('Show image button setup complete');
+        } else {
+            showImageBtn.style.display = 'none';
+            console.log('Show image button hidden - no assigned image');
+        }
+    } else {
+        console.error('Show image button not found');
+    }
+}
+
+// Fixed handle show image click
+function handleShowImageClick() {
+    console.log('Show image button clicked');
+    const showImageBtn = document.getElementById('showImageBtn');
+    if (showImageBtn && showImageBtn.disabled) {
+        console.log('Button is disabled, ignoring click');
+        return;
+    }
+    
+    // Show image for 2 minutes
+    showImageForDuration(2 * 60, false); // 2 minutes, don't disable editor
+    
+    // Disable button for 30 minutes
+    disableButtonForDuration(30 * 60); // 30 minutes in seconds
+}
+
+// Fixed disable button for duration
 function disableButtonForDuration(seconds) {
     const showImageBtn = document.getElementById('showImageBtn');
     if (!showImageBtn) return;
     
+    console.log(`Disabling button for ${seconds} seconds`);
     showImageBtn.disabled = true;
     startButtonCountdown(seconds);
 }
 
+// Fixed button countdown
 function startButtonCountdown(seconds) {
     const showImageBtn = document.getElementById('showImageBtn');
     const countdownSpan = document.getElementById('imageButtonCountdown');
     
-    if (!showImageBtn || !countdownSpan) return;
+    if (!showImageBtn || !countdownSpan) {
+        console.error('Button countdown elements not found');
+        return;
+    }
     
     if (imageTimer.buttonCountdownInterval) {
         clearInterval(imageTimer.buttonCountdownInterval);
     }
     
+    let remainingSeconds = seconds;
+    
+    // Update immediately
+    updateButtonCountdown(remainingSeconds, countdownSpan, showImageBtn);
+    
     imageTimer.buttonCountdownInterval = setInterval(() => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+        remainingSeconds--;
+        updateButtonCountdown(remainingSeconds, countdownSpan, showImageBtn);
         
-        countdownSpan.textContent = timeString;
-        
-        seconds--;
-        
-        if (seconds < 0) {
+        if (remainingSeconds <= 0) {
             clearInterval(imageTimer.buttonCountdownInterval);
             showImageBtn.disabled = false;
             countdownSpan.textContent = 'Ready';
+            console.log('Button re-enabled');
         }
     }, 1000);
 }
 
+// Helper function to update button countdown
+function updateButtonCountdown(seconds, countdownSpan, showImageBtn) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+    
+    countdownSpan.textContent = timeString;
+    
+    if (seconds > 0) {
+        showImageBtn.disabled = true;
+    }
+}
+
+// Fixed check first login
+async function checkFirstLogin() {
+    try {
+        const response = await fetch('/api/client/check-first-login', {
+            credentials: 'include'
+        });
+        const result = await response.json();
+        console.log('First login check result:', result);
+        return result.isFirstLogin || false;
+    } catch (error) {
+        console.error('Error checking first login:', error);
+        return false;
+    }
+}
 // Close image modal when clicking outside
 document.addEventListener('click', function(event) {
     const modal = document.getElementById('imageModal');
