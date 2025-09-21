@@ -401,6 +401,13 @@ tr:hover {
     color: #333;
 }
 
+.assign-image-wrapper select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-weight: 600;
+}
+
 .confirmation-input input {
     width: 100%;
     padding: 12px;

@@ -378,6 +378,127 @@ const upload = multer({
     }
 });
 
+// Image & team image-timing endpoints
+// Serve list of available images from public/images
+app.get('/api/images', (req, res) => {
+    const imagesDir = path.join(__dirname, '../public/images');
+    try {
+        if (!fs.existsSync(imagesDir)) {
+            return res.json({ success: true, images: [] });
+        }
+        const files = fs.readdirSync(imagesDir).filter(f => f.match(/\.(png|jpg|jpeg|svg|gif)$/i));
+        const images = files.map(f => `/images/${f}`);
+        res.json({ success: true, images });
+    } catch (err) {
+        console.error('Failed to list images', err);
+        res.status(500).json({ success: false, message: 'Failed to list images' });
+    }
+});
+
+// Admin-only: assign image to a team
+app.post('/api/team/assign-image', async (req, res) => {
+    try {
+        const { teamId, imagePath } = req.body;
+        if (!teamId || !imagePath) return res.status(400).json({ success: false, message: 'teamId and imagePath required' });
+        const team = await Team.findById(teamId);
+        if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
+
+        team.assignedImage = imagePath;
+        // Reset timing so first-image shows next login
+        team.firstImageShown = false;
+        team.lastImageShownAt = null;
+        team.lastButtonClickAt = null;
+        await team.save();
+
+        res.json({ success: true, team });
+    } catch (err) {
+        console.error('assign-image error', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// For authenticated team: get image status (assigned image, whether should show now, remaining times)
+app.get('/api/team/image-status', requireAuth, async (req, res) => {
+    try {
+        const team = await Team.findById(req.user._id);
+        if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
+
+        const now = new Date();
+        const assignedImage = team.assignedImage || null;
+
+        // Determine if first-time show applies
+        let shouldShow = false;
+        let showDurationSeconds = 0;
+        let nextAvailableAt = null;
+        let buttonDisabled = false;
+        let buttonRemainingSeconds = 0;
+
+        if (assignedImage) {
+            if (!team.firstImageShown) {
+                // First login: show for 5 minutes
+                shouldShow = true;
+                showDurationSeconds = 5 * 60;
+            } else {
+                // After first show, button-based flow
+                // Button disabled while 30-minute cooldown after lastButtonClickAt
+                const lastClick = team.lastButtonClickAt;
+                if (lastClick) {
+                    const diffMs = now - new Date(lastClick);
+                    const cooldownMs = 30 * 60 * 1000; // 30 minutes
+                    if (diffMs < cooldownMs) {
+                        buttonDisabled = true;
+                        buttonRemainingSeconds = Math.ceil((cooldownMs - diffMs) / 1000);
+                    }
+                }
+                // If button was just clicked and within the 2-minute show window, shouldShow true
+                const lastShown = team.lastImageShownAt;
+                if (lastShown) {
+                    const diffMs = now - new Date(lastShown);
+                    const showWindowMs = 2 * 60 * 1000; // 2 minutes
+                    if (diffMs < showWindowMs) {
+                        shouldShow = true;
+                        showDurationSeconds = Math.ceil((showWindowMs - diffMs) / 1000);
+                    }
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            assignedImage,
+            shouldShow,
+            showDurationSeconds,
+            buttonDisabled,
+            buttonRemainingSeconds
+        });
+    } catch (err) {
+        console.error('image-status error', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Mark that the image was shown (either initial automatic show ended or button was clicked to show)
+app.post('/api/team/mark-shown', requireAuth, async (req, res) => {
+    try {
+        const { triggeredBy } = req.body; // 'initial' or 'button'
+        const team = await Team.findById(req.user._id);
+        if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
+
+        const now = new Date();
+        team.lastImageShownAt = now;
+        if (triggeredBy === 'button') {
+            team.lastButtonClickAt = now;
+        }
+        if (!team.firstImageShown) team.firstImageShown = true;
+        await team.save();
+
+        res.json({ success: true, team });
+    } catch (err) {
+        console.error('mark-shown error', err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
 // Helper function for creating submission files
 async function createSubmissionFiles(submission, outputDir) {
     try {
