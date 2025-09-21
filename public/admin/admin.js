@@ -910,3 +910,4 @@ async function loadAvailableImages() {
         showAlert(`Error loading images: ${error.message}. Please check if /public/images/ directory exists and contains image files.`, 'error');
     }
 }
+

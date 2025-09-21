@@ -911,3 +911,256 @@ document.addEventListener('click', function(event) {
     }
 });
 
+let imageTimer = {
+    isFirstLogin: true,
+    showImageButton: null,
+    imageCountdown: null,
+    buttonCountdown: null,
+    isImageVisible: false,
+    buttonDisabledUntil: null,
+    currentImageInterval: null,
+    buttonCountdownInterval: null
+};
+
+// Update the initializeInterface function
+async function initializeInterface() {
+    try {
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        console.log('Starting authentication check...');
+        
+        const authStatus = await checkAuthenticationStatus();
+        
+        console.log('Auth Status Response:', authStatus);
+        console.log('Is Authenticated:', authStatus.authenticated);
+        console.log('Team Data:', authStatus.team);
+        
+        if (!authStatus.authenticated) {
+            console.log('User not authenticated, showing login prompt');
+            showLoginPrompt();
+            return;
+        }
+        
+        currentTeam = authStatus.team;
+        console.log('Current Team Set:', currentTeam);
+        
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        if (currentTeam) {
+            console.log('Team found, updating display...');
+            updateTeamDisplay();
+            document.getElementById('submitBtn').disabled = false;
+            
+            // Initialize image system
+            await initializeImageSystem();
+            
+            await checkForRestoreData();
+            startAutoSave();
+        } else {
+            console.error('No team data received despite authentication success');
+            showAlert('No team information found. Please contact administrator.', 'error');
+        }
+        
+        initializeEditorHistory();
+        runCode();
+        
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showAlert('Error loading team information: ' + error.message, 'error');
+        document.getElementById('loadingOverlay').style.display = 'none';
+        showLoginPrompt();
+    }
+}
+
+// Add these new functions
+async function initializeImageSystem() {
+    try {
+        // Check if this is first login
+        const isFirstLogin = await checkFirstLogin();
+        
+        if (isFirstLogin) {
+            // Show image for 5 minutes on first login
+            await showImageForDuration(5 * 60 * 1000, true); // 5 minutes in milliseconds
+        }
+        
+        // Initialize show image button
+        setupShowImageButton();
+        
+    } catch (error) {
+        console.error('Error initializing image system:', error);
+    }
+}
+
+async function checkFirstLogin() {
+    try {
+        const response = await fetch('/api/client/check-first-login', {
+            credentials: 'include'
+        });
+        const result = await response.json();
+        return result.isFirstLogin;
+    } catch (error) {
+        console.error('Error checking first login:', error);
+        return false;
+    }
+}
+
+function setupShowImageButton() {
+    const showImageBtn = document.getElementById('showImageBtn');
+    if (showImageBtn) {
+        showImageBtn.addEventListener('click', handleShowImageClick);
+        
+        // Start 30-minute countdown
+        startButtonCountdown(30 * 60); // 30 minutes in seconds
+    }
+}
+
+function handleShowImageClick() {
+    const showImageBtn = document.getElementById('showImageBtn');
+    if (showImageBtn.disabled) return;
+    
+    // Show image for 2 minutes
+    showImageForDuration(2 * 60 * 1000, false); // 2 minutes in milliseconds
+    
+    // Disable button for 30 minutes
+    disableButtonForDuration(30 * 60); // 30 minutes in seconds
+}
+
+async function showImageForDuration(duration, disableEditor = false) {
+    try {
+        if (!currentTeam || !currentTeam.assignedImage) {
+            showAlert('No image assigned to your team', 'error');
+            return;
+        }
+        
+        const modal = document.getElementById('imageModal');
+        const displayImage = document.getElementById('displayImage');
+        const overlayMessage = document.getElementById('imageOverlayMessage');
+        const editorContainer = document.querySelector('.main-content');
+        
+        if (!modal || !displayImage) return;
+        
+        // Set image source
+        displayImage.src = `/images/${currentTeam.assignedImage}`;
+        
+        // Show modal
+        modal.style.display = 'block';
+        imageTimer.isImageVisible = true;
+        
+        // Show overlay and disable editor if it's first login
+        if (disableEditor) {
+            overlayMessage.style.display = 'flex';
+            editorContainer.classList.add('editor-disabled');
+        } else {
+            overlayMessage.style.display = 'none';
+        }
+        
+        // Start countdown
+        startImageCountdown(Math.floor(duration / 1000));
+        
+        // Auto-hide after duration
+        setTimeout(() => {
+            hideImage();
+            if (disableEditor) {
+                editorContainer.classList.remove('editor-disabled');
+            }
+        }, duration);
+        
+    } catch (error) {
+        console.error('Error showing image:', error);
+    }
+}
+
+function startImageCountdown(seconds) {
+    const countdownElement = document.getElementById('imageCountdown');
+    const overlayCountdownElement = document.getElementById('overlayCountdown');
+    
+    if (imageTimer.currentImageInterval) {
+        clearInterval(imageTimer.currentImageInterval);
+    }
+    
+    imageTimer.currentImageInterval = setInterval(() => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+        
+        if (countdownElement) countdownElement.textContent = timeString;
+        if (overlayCountdownElement) overlayCountdownElement.textContent = timeString;
+        
+        seconds--;
+        
+        if (seconds < 0) {
+            clearInterval(imageTimer.currentImageInterval);
+        }
+    }, 1000);
+}
+
+function hideImage() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    
+    imageTimer.isImageVisible = false;
+    
+    if (imageTimer.currentImageInterval) {
+        clearInterval(imageTimer.currentImageInterval);
+    }
+}
+
+function disableButtonForDuration(seconds) {
+    const showImageBtn = document.getElementById('showImageBtn');
+    if (!showImageBtn) return;
+    
+    showImageBtn.disabled = true;
+    startButtonCountdown(seconds);
+}
+
+function startButtonCountdown(seconds) {
+    const showImageBtn = document.getElementById('showImageBtn');
+    const countdownSpan = document.getElementById('imageButtonCountdown');
+    
+    if (!showImageBtn || !countdownSpan) return;
+    
+    if (imageTimer.buttonCountdownInterval) {
+        clearInterval(imageTimer.buttonCountdownInterval);
+    }
+    
+    imageTimer.buttonCountdownInterval = setInterval(() => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const timeString = `${minutes}:${secs.toString().padStart(2, '0')}`;
+        
+        countdownSpan.textContent = timeString;
+        
+        seconds--;
+        
+        if (seconds < 0) {
+            clearInterval(imageTimer.buttonCountdownInterval);
+            showImageBtn.disabled = false;
+            countdownSpan.textContent = 'Ready';
+        }
+    }, 1000);
+}
+
+// Close image modal when clicking outside
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('imageModal');
+    const modalContent = document.querySelector('.image-modal-content');
+    
+    if (event.target === modal && !imageTimer.isImageVisible) {
+        hideImage();
+    }
+});
+
+// Prevent closing during mandatory viewing
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && imageTimer.isImageVisible) {
+        const overlayMessage = document.getElementById('imageOverlayMessage');
+        if (overlayMessage && overlayMessage.style.display !== 'none') {
+            // Don't allow closing during mandatory viewing
+            event.preventDefault();
+            return;
+        }
+        hideImage();
+    }
+});

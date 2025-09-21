@@ -1045,3 +1045,30 @@ select#assignedImage:invalid {
     border-radius: 4px;
     margin-top: 10px;
 }
+
+.assigned-image-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.assigned-image-thumb {
+    flex-shrink: 0;
+}
+
+.image-name {
+    font-size: 0.85em;
+    color: #666;
+    word-break: break-all;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.no-image {
+    color: #dc3545;
+    font-size: 0.9em;
+    font-style: italic;
+}
