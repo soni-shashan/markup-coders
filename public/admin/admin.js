@@ -823,3 +823,90 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Show loading state while images are being loaded
+function showImageLoadingState() {
+    const imageSelect = document.getElementById('assignedImage');
+    if (imageSelect) {
+        imageSelect.innerHTML = '<option value="">Loading images...</option>';
+        imageSelect.disabled = true;
+    }
+}
+
+// Show error state if images fail to load
+function showImageErrorState(error) {
+    const imageSelect = document.getElementById('assignedImage');
+    if (imageSelect) {
+        imageSelect.innerHTML = `
+            <option value="">Error loading images</option>
+            <option value="" disabled>Please check server logs</option>
+        `;
+        imageSelect.disabled = false;
+    }
+    console.error('Image loading error:', error);
+}
+
+// Update loadAvailableImages with better error handling
+async function loadAvailableImages() {
+    showImageLoadingState();
+    
+    try {
+        console.log('Loading available images...');
+        
+        const response = await fetch('/api/admin/available-images');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Images API response:', result);
+        
+        const imageSelect = document.getElementById('assignedImage');
+        if (!imageSelect) {
+            console.error('Image select element not found');
+            return;
+        }
+        
+        // Enable the select
+        imageSelect.disabled = false;
+        
+        if (result.success) {
+            // Clear existing options
+            imageSelect.innerHTML = '<option value="">Select an image...</option>';
+            
+            if (result.images && result.images.length > 0) {
+                result.images.forEach(image => {
+                    const option = document.createElement('option');
+                    option.value = image;
+                    // Show filename and extension for clarity
+                    option.textContent = image;
+                    imageSelect.appendChild(option);
+                });
+                
+                console.log(`Successfully loaded ${result.images.length} images`);
+                
+                // Show success message
+                if (result.count === 0) {
+                    showAlert('No images found. Please add images to /public/images/ directory', 'warning');
+                }
+            } else {
+                // Add message when no images found
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'No images found - Add images to /public/images/';
+                option.disabled = true;
+                imageSelect.appendChild(option);
+                
+                showAlert('No images found in /public/images/ directory. Please add some images first.', 'warning');
+            }
+        } else {
+            throw new Error(result.message || 'Failed to load images');
+        }
+        
+    } catch (error) {
+        console.error('Error loading images:', error);
+        showImageErrorState(error);
+        showAlert(`Error loading images: ${error.message}. Please check if /public/images/ directory exists and contains image files.`, 'error');
+    }
+}
