@@ -308,12 +308,12 @@ async function updateTeamDisplay() {
         }
         
         // Show welcome banner after team display is updated
+        console.log(currentTeam.isFirstTimeUser)
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
         if (currentTeam.isFirstTimeUser) {
             await maybeShowWelcomeBanner();
             await markUserAsNotFirstTime();
         }
-        console.log(currentTeam.isFirstTimeUser)
         
     } else {
         console.error('No currentTeam data available for display');
