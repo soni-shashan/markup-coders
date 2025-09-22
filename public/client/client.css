@@ -1175,7 +1175,7 @@ button:focus, input:focus, textarea:focus {
 
 .welcome-image-wrap img {
     width: 100%;
-    height: fit-content;
+    height: calc(fit-content - 10%);
     object-fit: cover;
     display: block;
     transition: transform 0.3s ease;
