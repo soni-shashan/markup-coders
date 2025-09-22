@@ -268,14 +268,12 @@ header {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* place at top */
-    padding-top: 16px;
+    align-items: center; /* place at top */
     z-index: 99999;
-    pointer-events: auto; /* allow overlay and banner interactions */
-    width: 100%;
 }
 
 .welcome-banner {
