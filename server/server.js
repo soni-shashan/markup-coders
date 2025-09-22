@@ -875,16 +875,16 @@ app.post('/api/admin/bulk-import', upload.single('excelFile'), async (req, res) 
                     continue;
                 }
                 if(teamData.image.trim()=="1"){
-                    teamData.image='https://drive.google.com/thumbnail?id=1IWi0Xn1ksNWxyG2Y9nCUO2yKy44FKEfG&sz=w1000'
+                    let imageUrl='https://drive.google.com/thumbnail?id=1IWi0Xn1ksNWxyG2Y9nCUO2yKy44FKEfG&sz=w1000'
                 }else if (teamData.image.trim()=="2"){
-                    teamData.image='https://drive.google.com/thumbnail?id=1OlFq1OExHQJZ04xz5wXP0k2ln1gmTZDS&sz=w1000'
+                    let imageUrl='https://drive.google.com/thumbnail?id=1OlFq1OExHQJZ04xz5wXP0k2ln1gmTZDS&sz=w1000'
                 }
                 const team = new Team({
                     teamName: teamData.teamName,
                     teamLeaderName: teamData.teamLeaderName,
                     studentId: teamData.studentId,
                     email: teamData.email,
-                    image: teamData.image.trim()|| null
+                    image: imageUrl
                 });
 
                 await team.save();
