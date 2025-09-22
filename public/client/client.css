@@ -998,7 +998,7 @@ button:focus, input:focus, textarea:focus {
 .welcome-content {
     position: relative;
     z-index: 2;
-    padding: 40px;
+    padding: 10px;
     color: white;
     text-align: center;
     display: flex;
