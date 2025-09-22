@@ -124,7 +124,12 @@ async function initializeInterface() {
         if (currentTeam) {
             console.log('Team found, updating display...');
             updateTeamDisplay();
-            document.getElementById('submitBtn').disabled = false;
+            const submitBtnEl = document.getElementById('submitBtn');
+            if (submitBtnEl) {
+                submitBtnEl.disabled = false;
+            } else {
+                console.warn('submitBtn not found when enabling submit');
+            }
             await checkForRestoreData();
             startAutoSave();
         } else {
@@ -252,13 +257,25 @@ function loginWithGoogle() {
 
 
 function setupEventListeners() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            switchTab(this.dataset.tab);
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    if (tabBtns && tabBtns.length) {
+        tabBtns.forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            }
         });
-    });
-    
-    document.getElementById('submitBtn').addEventListener('click', submitCode);
+    } else {
+        console.warn('No .tab-btn elements found to attach listeners');
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitCode);
+    } else {
+        console.warn('submitBtn not found; submit functionality disabled');
+    }
     
     const shortcutsHint = document.querySelector('.shortcuts-hint');
     if (shortcutsHint) {
@@ -291,7 +308,8 @@ function setupKeyboardShortcuts() {
             switch(e.key.toLowerCase()) {
                 case 's':
                     e.preventDefault();
-                    if (currentTeam && !document.getElementById('submitBtn').disabled) {
+                    const submitBtnEl = document.getElementById('submitBtn');
+                    if (currentTeam && submitBtnEl && !submitBtnEl.disabled) {
                         submitCode();
                     }
                     break;
@@ -894,8 +912,11 @@ async function submitCode() {
     }
     
     try {
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').textContent = 'Submitting...';
+        const submitBtnEl = document.getElementById('submitBtn');
+        if (submitBtnEl) {
+            submitBtnEl.disabled = true;
+            submitBtnEl.textContent = 'Submitting...';
+        }
         
         const response = await fetch('/api/client/submit', {
             method: 'POST',
@@ -930,8 +951,11 @@ async function submitCode() {
     } catch (error) {
         showAlert('Error submitting code: ' + error.message, 'error');
     } finally {
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').textContent = 'Submit Code';
+        const submitBtnEl2 = document.getElementById('submitBtn');
+        if (submitBtnEl2) {
+            submitBtnEl2.disabled = false;
+            submitBtnEl2.textContent = 'Submit Code';
+        }
     }
 }
 
