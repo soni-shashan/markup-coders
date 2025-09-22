@@ -2,6 +2,82 @@ let currentTeam = null;
 let autoSaveInterval = null;
 let restoreData = null;
 
+// Welcome banner configuration
+const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Check whether to show the welcome overlay for the current team.
+ * Uses localStorage key `welcome_seen_<teamId>` to persist.
+ */
+function maybeShowWelcomeBanner() {
+    try {
+        if (!currentTeam || !currentTeam.id) return;
+        const key = `welcome_seen_${currentTeam.id}`;
+        const seenDataRaw = localStorage.getItem(key);
+        if (seenDataRaw) return; // already seen for this team
+
+        // show banner
+        showWelcomeOverlay(WELCOME_DURATION_MS, key);
+    } catch (e) {
+        console.error('maybeShowWelcomeBanner error', e);
+    }
+}
+
+function showWelcomeOverlay(durationMs, storageKey) {
+    const overlay = document.getElementById('welcomeOverlay');
+    const countdownEl = document.getElementById('welcomeCountdown');
+    const closeBtn = document.getElementById('welcomeClose');
+
+    if (!overlay || !countdownEl) return;
+
+    document.body.classList.add('welcome-active');
+    overlay.style.display = 'flex';
+
+    let remaining = Math.max(0, Math.floor(durationMs / 1000));
+
+    function formatMMSS(sec) {
+        const m = Math.floor(sec / 60).toString().padStart(2, '0');
+        const s = (sec % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    countdownEl.textContent = formatMMSS(remaining);
+
+    const interval = setInterval(() => {
+        remaining -= 1;
+        countdownEl.textContent = formatMMSS(remaining);
+        if (remaining <= 0) {
+            clearInterval(interval);
+            closeWelcomeOverlay(storageKey);
+        }
+    }, 1000);
+
+    function onCloseEarly() {
+        clearInterval(interval);
+        closeWelcomeOverlay(storageKey);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', onCloseEarly, { once: true });
+    }
+
+    // ensure overlay clicks outside don't close or interact with page
+    overlay.addEventListener('click', function (ev) {
+        if (ev.target === overlay) ev.stopPropagation();
+    });
+}
+
+function closeWelcomeOverlay(storageKey) {
+    const overlay = document.getElementById('welcomeOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.body.classList.remove('welcome-active');
+    try {
+        if (storageKey) localStorage.setItem(storageKey, JSON.stringify({ seenAt: Date.now() }));
+    } catch (e) {
+        console.warn('Could not persist welcome seen flag', e);
+    }
+}
+
 // Enhanced editor functionality
 let editorHistory = {
     html: { undo: [], redo: [] },
@@ -129,6 +205,13 @@ function updateTeamDisplay() {
     } else {
         console.error('No currentTeam data available for display');
     }
+    
+        // After updating UI for the team, consider showing welcome banner (first-time per team)
+        try {
+            maybeShowWelcomeBanner();
+        } catch (e) {
+            console.error('Error while checking welcome banner', e);
+        }
 }
 
 function showLoginPrompt() {
