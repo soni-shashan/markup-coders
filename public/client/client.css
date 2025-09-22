@@ -1043,27 +1043,26 @@ button:focus, input:focus, textarea:focus {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 20px;
     padding: 5px;
-    margin: 10px 0;
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: fadeInUp 1s ease-out 0.7s both;
     width: 150px;
-    height: 50px;
+    height: 70px;
 }
 
 .countdown-label {
-    font-size: 0.7em;
-    margin-bottom: 15px;
+    font-size: 0.5em;
+    margin-bottom: 10px;
     opacity: 0.9;
-    font-weight: 200;
+    font-weight: 100;
 }
 
 .countdown-display {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 7px;
 }
 
 .time-unit {
@@ -1073,7 +1072,7 @@ button:focus, input:focus, textarea:focus {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 15px;
     padding: 5px 5px;
-    width: 55px;
+    width: 52px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
@@ -1085,8 +1084,8 @@ button:focus, input:focus, textarea:focus {
 }
 
 .time-value {
-    font-size: 1em;
-    font-weight: 200;
+    font-size: 0.8em;
+    font-weight: 170;
     line-height: 1;
     color: #fff;
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
@@ -1097,7 +1096,7 @@ button:focus, input:focus, textarea:focus {
     font-size: 0.5em;
     opacity: 0.8;
     margin-top: 5px;
-    font-weight: 400;
+    font-weight: 300;
     letter-spacing: 1px;
 }
 
@@ -1154,6 +1153,7 @@ button:focus, input:focus, textarea:focus {
     border-radius: 20px;
     overflow: hidden;
     width: 90%;
+    height: fit-content;
     box-shadow: 
         0 15px 35px rgba(0, 0, 0, 0.3),
         0 0 0 1px rgba(255, 255, 255, 0.1);
