@@ -592,27 +592,32 @@ app.get('/auth/google/callback',
     }
 );
 
-
-app.get('/isFirstTimeUser', requireAuth, (req, res) => {
-    if (req.user) {
-         Team.findOneAndUpdate(
-            { teamName: req.user.teamName, email: req.user.email },
-            {
-                isFirstTimeUser: false
-            },
-            { 
-                upsert: true, 
-                new: true 
-            }
-        );
-        res.json({
-            success: true,
-            isFirstTimeUser: req.user.isFirstTimeUser
-        });
-    } else {
-        res.status(401).json({
+// API to mark user as not first time
+app.get('/isFirstTimeUser', requireAuth, async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({
             success: false,
             message: 'Not authenticated'
+        });
+    }
+
+    try {
+        // Update the user's isFirstTimeUser to false
+        const updatedTeam = await Team.findOneAndUpdate(
+            { teamName: req.user.teamName, email: req.user.email },
+            { isFirstTimeUser: false },
+            { upsert: true, new: true } // return the updated document
+        );
+
+        res.json({
+            success: true,
+            isFirstTimeUser: updatedTeam.isFirstTimeUser
+        });
+    } catch (err) {
+        console.error('Error updating user:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
         });
     }
 });
