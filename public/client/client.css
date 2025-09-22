@@ -1044,7 +1044,7 @@ button:focus, input:focus, textarea:focus {
 .countdown-section {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 20px;
-    padding: 5px;
+    padding: 3px;
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: fadeInUp 1s ease-out 0.7s both;
@@ -1154,7 +1154,6 @@ button:focus, input:focus, textarea:focus {
     margin: 10px 0;
     border-radius: 20px;
     overflow: hidden;
-    width: 90%;
     height: calc(fit-content - 10%);
     box-shadow: 
         0 15px 35px rgba(0, 0, 0, 0.3),
@@ -1176,7 +1175,6 @@ button:focus, input:focus, textarea:focus {
 }
 
 .welcome-image-wrap img {
-    width: 100%;
     height: calc(fit-content - 10%);
     object-fit: cover;
     display: block;
