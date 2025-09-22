@@ -275,7 +275,7 @@ async function checkAuthenticationStatus() {
     }
 }
 
-function updateTeamDisplay() {
+async function updateTeamDisplay() {
     console.log('updateTeamDisplay called with:', currentTeam);
     
     if (currentTeam) {
@@ -311,7 +311,7 @@ function updateTeamDisplay() {
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
         if (currentTeam.isFirstTimeUser) {
             maybeShowWelcomeBanner();
-            markUserAsNotFirstTime();
+            await markUserAsNotFirstTime();
         }
         
     } else {
@@ -319,7 +319,7 @@ function updateTeamDisplay() {
     }
 }
 
-function markUserAsNotFirstTime() {
+async function markUserAsNotFirstTime() {
     try {
         const response = await fetch('/isFirstTimeUser', {
             method: 'GET',
