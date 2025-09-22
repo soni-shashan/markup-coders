@@ -1154,7 +1154,7 @@ button:focus, input:focus, textarea:focus {
     margin: 10px 0;
     border-radius: 20px;
     overflow: hidden;
-    height: calc(fit-content - 20%);
+    height: calc(fit-content - 25%);
     box-shadow: 
         0 15px 35px rgba(0, 0, 0, 0.3),
         0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -1175,7 +1175,7 @@ button:focus, input:focus, textarea:focus {
 }
 
 .welcome-image-wrap img {
-    height: calc(fit-content - 15%);
+    height: calc(fit-content - 20%);
     object-fit: cover;
     display: block;
     transition: transform 0.3s ease;
