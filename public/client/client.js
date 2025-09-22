@@ -211,8 +211,14 @@ function updateTeamDisplay() {
     console.log('updateTeamDisplay called with:', currentTeam);
     
     if (currentTeam) {
-        // decide whether to show welcome banner
-        try { setTimeout(maybeShowWelcomeBanner, 50); } catch (e) { console.error('scheduling maybeShowWelcomeBanner', e); }
+        // show welcome banner immediately for debugging and reliability
+        try {
+            console.log('updateTeamDisplay: attempting to show welcome overlay now');
+            showWelcomeOverlay(WELCOME_DURATION_MS);
+            console.log('updateTeamDisplay: showWelcomeOverlay called');
+        } catch (e) {
+            console.error('updateTeamDisplay: error calling showWelcomeOverlay', e);
+        }
         const teamNameEl = document.getElementById('teamName');
         const teamLeaderEl = document.getElementById('teamLeader');
         const studentIdEl = document.getElementById('studentId');
