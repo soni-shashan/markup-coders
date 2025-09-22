@@ -974,7 +974,6 @@ button:focus, input:focus, textarea:focus {
     position: relative;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     border-radius: 25px;
-    max-width: 800px;
     width: 90%;
     max-height: 90vh;
     overflow: hidden;
@@ -1047,7 +1046,7 @@ button:focus, input:focus, textarea:focus {
     backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: fadeInUp 1s ease-out 0.7s both;
-    min-width: 300px;
+    min-width: 150px;
 }
 
 .countdown-label {
@@ -1152,6 +1151,7 @@ button:focus, input:focus, textarea:focus {
     margin: 30px 0;
     border-radius: 20px;
     overflow: hidden;
+    width: 70%;
     box-shadow: 
         0 15px 35px rgba(0, 0, 0, 0.3),
         0 0 0 1px rgba(255, 255, 255, 0.1);
