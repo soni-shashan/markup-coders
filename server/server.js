@@ -63,6 +63,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+
 // Google OAuth Strategy
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
@@ -590,6 +591,21 @@ app.get('/auth/google/callback',
         });
     }
 );
+
+
+app.get('/isFirstTimeUser', requireAuth, (req, res) => {
+    if (req.user) {
+        res.json({
+            success: true,
+            isFirstTimeUser: req.user.isFirstTimeUser || false
+        });
+    } else {
+        res.status(401).json({
+            success: false,
+            message: 'Not authenticated'
+        });
+    }
+}
 
 app.get('/auth/logout', (req, res) => {
     const teamName = req.user ? req.user.teamName : 'Unknown';

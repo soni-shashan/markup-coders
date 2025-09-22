@@ -44,7 +44,10 @@ const teamSchema = new mongoose.Schema({
   profilePicture: {
     type: String
   },
-
+  isFirstTimeUser: {
+    type: Boolean,
+    default: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

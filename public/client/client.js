@@ -140,15 +140,6 @@ function showWelcomeOverlay(durationMs) {
         console.warn('Close button not found');
     }
 
-    // Close on overlay background click
-    overlay.addEventListener('click', function(ev) {
-        if (ev.target === overlay) {
-            console.log('Overlay background clicked');
-            clearInterval(countdownInterval);
-            closeWelcomeOverlay();
-        }
-    });
-
     // Close on Escape key
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
