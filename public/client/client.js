@@ -4,13 +4,77 @@ let restoreData = null;
 
 // Welcome banner configuration
 
+const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+function maybeShowWelcomeBanner() {
+    try {
+        console.log('maybeShowWelcomeBanner: entered', { currentTeam: !!currentTeam });
+        if (!currentTeam) {
+            console.log('maybeShowWelcomeBanner: no currentTeam yet, retrying shortly');
+            setTimeout(maybeShowWelcomeBanner, 300);
+            return;
+        }
+
+        const candidate = currentTeam.id || currentTeam.teamId || currentTeam.studentId || currentTeam.email || currentTeam.teamName;
+        if (!candidate) {
+            console.warn('maybeShowWelcomeBanner: no team identifier available');
+            return;
+        }
+
+        const safeKey = encodeURIComponent(String(candidate));
+        const storageKeyNew = `welcome_seen_${safeKey}`;
+        const storageKeyLegacy = `welcomeSeen_${candidate}`;
+        const seenNew = localStorage.getItem(storageKeyNew);
+        const seenLegacy = localStorage.getItem(storageKeyLegacy);
+        console.log('maybeShowWelcomeBanner: keys', { storageKeyNew, storageKeyLegacy, seenNew: !!seenNew, seenLegacy: !!seenLegacy });
+
+        // Allow dev/test override via URL param: ?showWelcome=1
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const forceShow = params && params.get('showWelcome') === '1';
+        if (!forceShow && (seenNew || seenLegacy)) {
+            console.log('maybeShowWelcomeBanner: banner suppressed because seen flag present');
+            return; // already seen by either scheme
+        }
+
+        console.log('maybeShowWelcomeBanner: showing banner', { forceShow });
+        // call the overlay
+        showWelcomeOverlay(WELCOME_DURATION_MS, storageKeyNew);
+    } catch (e) {
+        console.error('maybeShowWelcomeBanner error', e);
+    }
+}
 
 function showWelcomeOverlay(durationMs, storageKey) {
     const overlay = document.getElementById('welcomeOverlay');
     const countdownEl = document.getElementById('welcomeCountdown');
     const closeBtn = document.getElementById('welcomeClose');
 
-    if (!overlay || !countdownEl) return;
+    console.log('showWelcomeOverlay called', { durationMs, storageKey, overlay: !!overlay, countdown: !!countdownEl, closeBtn: !!closeBtn });
+
+    if (!overlay) {
+        console.warn('showWelcomeOverlay: overlay element not found');
+        return;
+    }
+    if (!countdownEl) {
+        console.warn('showWelcomeOverlay: countdown element not found');
+        return;
+    }
+
+    // enforce visible popup styles in case CSS or other elements hide it
+    try {
+        overlay.style.display = 'flex';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.width = '100%';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'flex-start';
+        overlay.style.zIndex = '999999';
+        overlay.style.pointerEvents = 'auto';
+    } catch (e) {
+        console.warn('Could not enforce overlay styles', e);
+    }
 
     document.body.classList.add('welcome-active');
     overlay.style.display = 'flex';
@@ -176,13 +240,12 @@ async function checkAuthenticationStatus() {
     }
 }
 
-const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-
 function updateTeamDisplay() {
     console.log('updateTeamDisplay called with:', currentTeam);
     
     if (currentTeam) {
-        showWelcomeOverlay(WELCOME_DURATION_MS,'welcomeSeen_' + (currentTeam ? currentTeam.teamId : 'unknown'));
+        // decide whether to show welcome banner
+        try { setTimeout(maybeShowWelcomeBanner, 50); } catch (e) { console.error('scheduling maybeShowWelcomeBanner', e); }
         const teamNameEl = document.getElementById('teamName');
         const teamLeaderEl = document.getElementById('teamLeader');
         const studentIdEl = document.getElementById('studentId');
