@@ -236,19 +236,11 @@ function updateTeamDisplay() {
             pcIPEl.textContent = `Email: ${currentTeam.email || 'Unknown'}`;
             console.log('Set email to:', pcIPEl.textContent);
         }
+        maybeShowWelcomeBanner();
     } else {
         console.error('No currentTeam data available for display');
     }
     
-        // After updating UI for the team, consider showing welcome banner (first-time per team)
-        try {
-            // schedule slightly after DOM updates to avoid races
-            setTimeout(() => {
-                try { maybeShowWelcomeBanner(); } catch (e) { console.error('Error while checking welcome banner', e); }
-            }, 50);
-        } catch (e) {
-            console.error('Error while scheduling welcome banner', e);
-        }
 }
 
 function showLoginPrompt() {
