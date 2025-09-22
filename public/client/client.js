@@ -3,7 +3,6 @@ let autoSaveInterval = null;
 let restoreData = null;
 
 // Welcome banner configuration
-const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 
 function showWelcomeOverlay(durationMs, storageKey) {
@@ -177,10 +176,13 @@ async function checkAuthenticationStatus() {
     }
 }
 
+const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 function updateTeamDisplay() {
     console.log('updateTeamDisplay called with:', currentTeam);
     
     if (currentTeam) {
+        showWelcomeOverlay(WELCOME_DURATION_MS,'welcomeSeen_' + (currentTeam ? currentTeam.teamId : 'unknown'));
         const teamNameEl = document.getElementById('teamName');
         const teamLeaderEl = document.getElementById('teamLeader');
         const studentIdEl = document.getElementById('studentId');
@@ -207,7 +209,6 @@ function updateTeamDisplay() {
             pcIPEl.textContent = `Email: ${currentTeam.email || 'Unknown'}`;
             console.log('Set email to:', pcIPEl.textContent);
         }
-        showWelcomeOverlay();
     } else {
         console.error('No currentTeam data available for display');
     }
