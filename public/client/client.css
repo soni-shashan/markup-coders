@@ -1048,6 +1048,7 @@ button:focus, input:focus, textarea:focus {
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: fadeInUp 1s ease-out 0.7s both;
     min-width: 150px;
+    scale: 0.5;
 }
 
 .countdown-label {
