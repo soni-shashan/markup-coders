@@ -12,11 +12,19 @@ const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 function maybeShowWelcomeBanner() {
     try {
         // compute a reliable per-team key: prefer id, then studentId, then email, then teamName
-        if (!currentTeam) return;
+        if (!currentTeam) {
+            // If currentTeam isn't set yet, wait briefly and retry once.
+            setTimeout(() => {
+                try { maybeShowWelcomeBanner(); } catch (e) { console.error('retry maybeShowWelcomeBanner', e); }
+            }, 300);
+            return;
+        }
         const teamKeyCandidate = currentTeam.id || currentTeam.studentId || currentTeam.email || currentTeam.teamName;
         if (!teamKeyCandidate) return; // cannot determine unique team key
 
-        const key = `welcome_seen_${teamKeyCandidate}`;
+    // sanitize/encode the candidate so localStorage key is safe
+    const safeKey = encodeURIComponent(String(teamKeyCandidate));
+    const key = `welcome_seen_${safeKey}`;
         const seenDataRaw = localStorage.getItem(key);
         if (seenDataRaw) return; // already seen for this team
 
@@ -234,9 +242,12 @@ function updateTeamDisplay() {
     
         // After updating UI for the team, consider showing welcome banner (first-time per team)
         try {
-            maybeShowWelcomeBanner();
+            // schedule slightly after DOM updates to avoid races
+            setTimeout(() => {
+                try { maybeShowWelcomeBanner(); } catch (e) { console.error('Error while checking welcome banner', e); }
+            }, 50);
         } catch (e) {
-            console.error('Error while checking welcome banner', e);
+            console.error('Error while scheduling welcome banner', e);
         }
 }
 
