@@ -346,6 +346,8 @@ async function updateTeamDisplay() {
         if (currentTeam.isFirstTimeUser) {
             await maybeShowWelcomeBanner();
             await markUserAsNotFirstTime();
+        }else{
+            startCountdown(30,'imageBtn','timer')
         }
         
     } else {
