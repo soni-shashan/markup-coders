@@ -48,8 +48,7 @@ async function initializeInterface() {
         if (currentTeam) {
             console.log('Team found, updating display...');
             updateTeamDisplay();
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) submitBtn.disabled = false;
+            document.getElementById('submitBtn').disabled = false;
             await checkForRestoreData();
             startAutoSave();
         } else {
@@ -132,145 +131,6 @@ function updateTeamDisplay() {
     }
 }
 
-// ---- Image overlay and timing support ----
-async function fetchImageStatus() {
-    try {
-        const res = await fetch('/api/team/image-status', { credentials: 'include' });
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (data.success) return data;
-        return null;
-    } catch (err) {
-        console.error('fetchImageStatus error', err);
-        return null;
-    }
-}
-
-async function ensureImageUi() {
-    // create overlay and more button if not present
-    if (!document.getElementById('imageOverlay')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'imageOverlay';
-        overlay.className = 'image-overlay';
-        overlay.innerHTML = `
-            <div class="image-overlay-inner">
-                <img id="overlayImage" src="" alt="Assigned Image">
-                <div id="overlayCountdown" class="overlay-countdown"></div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-
-    if (!document.getElementById('moreImageBtn')) {
-        const btn = document.createElement('button');
-        btn.id = 'moreImageBtn';
-        btn.className = 'more-image-btn';
-        btn.textContent = 'More';
-        btn.addEventListener('click', async () => {
-            btn.disabled = true;
-            await markImageShown('button');
-            showOverlayForDuration(2 * 60); // 2 minutes
-            startButtonCooldown();
-        });
-        document.body.appendChild(btn);
-    }
-}
-
-async function markImageShown(triggeredBy) {
-    try {
-        await fetch('/api/team/mark-shown', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ triggeredBy })
-        });
-    } catch (err) {
-        console.error('markImageShown error', err);
-    }
-}
-
-let overlayTimer = null;
-function showOverlayForDuration(seconds) {
-    const overlay = document.getElementById('imageOverlay');
-    const countdownEl = document.getElementById('overlayCountdown');
-    if (!overlay) return;
-    overlay.style.display = 'flex';
-    let remaining = seconds;
-    countdownEl.textContent = formatSeconds(remaining);
-    overlayTimer && clearInterval(overlayTimer);
-    overlayTimer = setInterval(() => {
-        remaining--;
-        countdownEl.textContent = formatSeconds(remaining);
-        if (remaining <= 0) {
-            clearInterval(overlayTimer);
-            overlay.style.display = 'none';
-        }
-    }, 1000);
-}
-
-function formatSeconds(sec) {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-}
-
-let buttonCooldownTimer = null;
-function startButtonCooldown() {
-    const btn = document.getElementById('moreImageBtn');
-    if (!btn) return;
-    const statusPoll = async () => {
-        const status = await fetchImageStatus();
-        if (!status) return;
-        if (status.buttonDisabled) {
-            btn.disabled = true;
-            const remaining = status.buttonRemainingSeconds;
-            btn.textContent = `More (${formatSeconds(remaining)})`;
-        } else {
-            btn.disabled = false;
-            btn.textContent = 'More';
-            // If image currently should show, show it
-            if (status.shouldShow && status.showDurationSeconds > 0) {
-                const img = document.getElementById('overlayImage');
-                img.src = status.assignedImage;
-                showOverlayForDuration(status.showDurationSeconds);
-            }
-            return; // stop polling when enabled
-        }
-    };
-
-    // poll every second until enabled
-    buttonCooldownTimer && clearInterval(buttonCooldownTimer);
-    buttonCooldownTimer = setInterval(statusPoll, 1000);
-}
-
-// Kick off image UI and check status
-async function initImageFlow() {
-    await ensureImageUi();
-    const status = await fetchImageStatus();
-    if (!status) return;
-    const img = document.getElementById('overlayImage');
-    img.src = status.assignedImage || '';
-
-    if (status.shouldShow && status.showDurationSeconds > 0) {
-        showOverlayForDuration(status.showDurationSeconds);
-        // mark initial shown if it's first show
-        if (!currentTeam.firstImageShown) await markImageShown('initial');
-    }
-
-    if (status.buttonDisabled) {
-        startButtonCooldown();
-    }
-}
-
-// Call initImageFlow after successful initialization
-const originalInit = initializeInterface;
-initializeInterface = async function() {
-    await originalInit();
-    if (currentTeam) {
-        initImageFlow();
-    }
-};
-
 function showLoginPrompt() {
     document.getElementById('loadingOverlay').style.display = 'none';
     
@@ -315,8 +175,7 @@ function setupEventListeners() {
         });
     });
     
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) submitBtn.addEventListener('click', submitCode);
+    document.getElementById('submitBtn').addEventListener('click', submitCode);
     
     const shortcutsHint = document.querySelector('.shortcuts-hint');
     if (shortcutsHint) {
@@ -349,11 +208,8 @@ function setupKeyboardShortcuts() {
             switch(e.key.toLowerCase()) {
                 case 's':
                     e.preventDefault();
-                    if (currentTeam) {
-                        const submitBtn = document.getElementById('submitBtn');
-                        if (submitBtn && !submitBtn.disabled) {
-                            submitCode();
-                        }
+                    if (currentTeam && !document.getElementById('submitBtn').disabled) {
+                        submitCode();
                     }
                     break;
                 case '1':
@@ -955,11 +811,8 @@ async function submitCode() {
     }
     
     try {
-        const submitBtnEl = document.getElementById('submitBtn');
-        if (submitBtnEl) {
-            submitBtnEl.disabled = true;
-            submitBtnEl.textContent = 'Submitting...';
-        }
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').textContent = 'Submitting...';
         
         const response = await fetch('/api/client/submit', {
             method: 'POST',
@@ -994,11 +847,8 @@ async function submitCode() {
     } catch (error) {
         showAlert('Error submitting code: ' + error.message, 'error');
     } finally {
-        const submitBtnEl = document.getElementById('submitBtn');
-        if (submitBtnEl) {
-            submitBtnEl.disabled = false;
-            submitBtnEl.textContent = 'Submit Code';
-        }
+        document.getElementById('submitBtn').disabled = false;
+        document.getElementById('submitBtn').textContent = 'Submit Code';
     }
 }
 

@@ -1,13 +1,11 @@
 let teams = [];
 let submissions = [];
 let currentTeamToDelete = null;
-let availableImages = [];
 
 // Initialize admin panel
 document.addEventListener('DOMContentLoaded', function() {
     loadTeams();
     loadSubmissions();
-    loadAvailableImages();
     
     document.getElementById('teamForm').addEventListener('submit', handleTeamSubmit);
     
@@ -74,15 +72,13 @@ async function handleTeamSubmit(event) {
     }
     
     try {
-        const assignedImage = document.getElementById('assignedImage').value || null;
-        const payload = Object.assign({}, formData, { assignedImage });
-
+        
         const response = await fetch('/api/admin/teams', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: await JSON.stringify(payload)
+            body: await JSON.stringify(formData)
         });
         const result = await response.json();
         
@@ -95,27 +91,6 @@ async function handleTeamSubmit(event) {
         }
     } catch (error) {
         showAlert('Error adding team: ' + error.message, 'error');
-    }
-}
-
-async function loadAvailableImages() {
-    try {
-        const res = await fetch('/api/images');
-        const data = await res.json();
-        if (data.success && Array.isArray(data.images)) {
-            availableImages = data.images;
-            const sel = document.getElementById('assignedImage');
-            availableImages.forEach(img => {
-                const opt = document.createElement('option');
-                opt.value = img;
-                opt.textContent = img.split('/').pop();
-                sel.appendChild(opt);
-            });
-            // re-render teams table to show assign controls if teams already loaded
-            if (teams.length > 0) renderTeamsTable();
-        }
-    } catch (err) {
-        console.error('loadAvailableImages error', err);
     }
 }
 
@@ -237,14 +212,6 @@ function renderTeamsTable() {
                                             👁️
                                         </button>
                                     ` : ''}
-                                    <div class="assign-image-wrapper">
-                                        <select onchange="assignImageToTeam('${team._id}', this)">
-                                            <option value="">-- Image --</option>
-                                            ${availableImages.map(img => `
-                                                <option value="${img}" ${team.assignedImage === img ? 'selected' : ''}>${img.split('/').pop()}</option>
-                                            `).join('')}
-                                        </select>
-                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -255,28 +222,6 @@ function renderTeamsTable() {
     `;
     
     container.innerHTML = table;
-}
-
-// Assign image to team from admin table
-async function assignImageToTeam(teamId, selectEl) {
-    const imagePath = selectEl.value || null;
-    try {
-        const res = await fetch('/api/team/assign-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ teamId, imagePath })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showAlert('Image assigned successfully', 'success');
-            loadTeams();
-        } else {
-            showAlert(data.message || 'Failed to assign image', 'error');
-        }
-    } catch (err) {
-        console.error('assignImageToTeam error', err);
-        showAlert('Server error assigning image', 'error');
-    }
 }
 
 function renderSubmissionsTable() {
