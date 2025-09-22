@@ -26,6 +26,27 @@ function maybeShowWelcomeBanner() {
     }
 }
 
+function startCountdown(durationInMinutes, buttonId, timerId) {
+      const button = document.getElementById(buttonId);
+      const timerDisplay = document.getElementById(timerId);
+      let timeLeft = durationInMinutes * 60; // convert minutes to seconds
+
+      const interval = setInterval(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+
+        timerDisplay.textContent = `(${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')})`;
+
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          button.disabled = false; // enable the button
+        }
+
+        timeLeft--;
+      }, 1000);
+}
+
+
 function showWelcomeOverlay(durationMs) {
     console.log('showWelcomeOverlay called', { durationMs });
     
@@ -120,6 +141,7 @@ function showWelcomeOverlay(durationMs) {
             updateCountdown();
             clearInterval(countdownInterval);
             console.log('Countdown finished, closing overlay');
+            startCountdown(30,'imageBtn','timer')
             closeWelcomeOverlay();
             return;
         }
@@ -224,6 +246,12 @@ async function initializeInterface() {
             console.log('Team found, updating display...');
             await updateTeamDisplay();
             const submitBtnEl = document.getElementById('submitBtn');
+            const imageBtn = document.getElementById('imageBtn');
+            if (imageBtn) {
+                imageBtn.disabled = true;
+            } else {
+                console.warn('imageBtn not found when enabling submit');
+            }
             if (submitBtnEl) {
                 submitBtnEl.disabled = false;
             } else {
@@ -397,6 +425,14 @@ function setupEventListeners() {
     }
 
     const submitBtn = document.getElementById('submitBtn');
+    const imageBtn = document.getElementById('imageBtn');
+    if (imageBtn) {
+        imageBtn.addEventListener('click', function() {
+            showWelcomeOverlay(2*60*1000);
+        });
+    } else {
+        console.warn('imageBtn not found; image functionality disabled');
+    }
     if (submitBtn) {
         submitBtn.addEventListener('click', submitCode);
     } else {
