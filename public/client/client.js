@@ -5,35 +5,6 @@ let restoreData = null;
 // Welcome banner configuration
 const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
-/**
- * Check whether to show the welcome overlay for the current team.
- * Uses localStorage key `welcome_seen_<teamId>` to persist.
- */
-function maybeShowWelcomeBanner() {
-    try {
-        // compute a reliable per-team key: prefer id, then studentId, then email, then teamName
-        if (!currentTeam) {
-            // If currentTeam isn't set yet, wait briefly and retry once.
-            setTimeout(() => {
-                try { maybeShowWelcomeBanner(); } catch (e) { console.error('retry maybeShowWelcomeBanner', e); }
-            }, 300);
-            return;
-        }
-        const teamKeyCandidate = currentTeam.id || currentTeam.studentId || currentTeam.email || currentTeam.teamName;
-        if (!teamKeyCandidate) return; // cannot determine unique team key
-
-    // sanitize/encode the candidate so localStorage key is safe
-    const safeKey = encodeURIComponent(String(teamKeyCandidate));
-    const key = `welcome_seen_${safeKey}`;
-        const seenDataRaw = localStorage.getItem(key);
-        if (seenDataRaw) return; // already seen for this team
-
-        // show banner
-        showWelcomeOverlay(WELCOME_DURATION_MS, key);
-    } catch (e) {
-        console.error('maybeShowWelcomeBanner error', e);
-    }
-}
 
 function showWelcomeOverlay(durationMs, storageKey) {
     const overlay = document.getElementById('welcomeOverlay');
@@ -236,7 +207,7 @@ function updateTeamDisplay() {
             pcIPEl.textContent = `Email: ${currentTeam.email || 'Unknown'}`;
             console.log('Set email to:', pcIPEl.textContent);
         }
-        maybeShowWelcomeBanner();
+        showWelcomeOverlay();
     } else {
         console.error('No currentTeam data available for display');
     }
