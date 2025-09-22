@@ -1,63 +1,79 @@
 let currentTeam = null;
 let autoSaveInterval = null;
 let restoreData = null;
-
 // Welcome banner configuration
-
 const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 function maybeShowWelcomeBanner() {
     try {
         console.log('maybeShowWelcomeBanner: entered', { currentTeam: !!currentTeam });
+        
         if (!currentTeam) {
             console.log('maybeShowWelcomeBanner: no currentTeam yet, retrying shortly');
             setTimeout(maybeShowWelcomeBanner, 300);
             return;
         }
-        // Always show the welcome banner on login (no storage keys)
-        showWelcomeOverlay(WELCOME_DURATION_MS);
+        
+        // Wait a bit more to ensure DOM is ready
+        setTimeout(() => {
+            console.log('maybeShowWelcomeBanner: showing welcome overlay');
+            showWelcomeOverlay(WELCOME_DURATION_MS);
+        }, 500);
+        
     } catch (e) {
         console.error('maybeShowWelcomeBanner error', e);
     }
 }
 
 function showWelcomeOverlay(durationMs) {
+    console.log('showWelcomeOverlay called', { durationMs });
+    
     const overlay = document.getElementById('welcomeOverlay');
     const countdownEl = document.getElementById('welcomeCountdown');
     const closeBtn = document.getElementById('welcomeClose');
 
-    console.log('showWelcomeOverlay called', { durationMs, overlay: !!overlay, countdown: !!countdownEl, closeBtn: !!closeBtn });
+    console.log('Elements found:', { 
+        overlay: !!overlay, 
+        countdown: !!countdownEl, 
+        closeBtn: !!closeBtn 
+    });
 
     if (!overlay) {
-        console.warn('showWelcomeOverlay: overlay element not found');
+        console.error('showWelcomeOverlay: overlay element not found');
         return;
     }
+    
     if (!countdownEl) {
-        console.warn('showWelcomeOverlay: countdown element not found');
+        console.error('showWelcomeOverlay: countdown element not found');
         return;
     }
 
-    // enforce visible popup styles in case CSS or other elements hide it
+    // Show the overlay
     try {
         overlay.style.display = 'flex';
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
         overlay.style.left = '0';
         overlay.style.right = '0';
+        overlay.style.bottom = '0';
         overlay.style.width = '100%';
+        overlay.style.height = '100%';
         overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'flex-start';
-        overlay.style.zIndex = '999999';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '10000';
         overlay.style.pointerEvents = 'auto';
+        overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+        
+        console.log('Overlay styles applied successfully');
     } catch (e) {
-        console.warn('Could not enforce overlay styles', e);
+        console.error('Could not apply overlay styles', e);
     }
 
     document.body.classList.add('welcome-active');
-    overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
 
     let remaining = Math.max(0, Math.floor(durationMs / 1000));
+    console.log('Starting countdown with', remaining, 'seconds');
 
     function formatMMSS(sec) {
         const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -65,15 +81,19 @@ function showWelcomeOverlay(durationMs) {
         return `${m}:${s}`;
     }
 
-    // initialize
+    // Initialize countdown
     countdownEl.textContent = formatMMSS(remaining);
 
     const interval = setInterval(() => {
         try {
             remaining -= 1;
             if (remaining < 0) remaining = 0;
+            
             countdownEl.textContent = formatMMSS(remaining);
+            console.log('Countdown:', formatMMSS(remaining));
+            
             if (remaining <= 0) {
+                console.log('Countdown finished, closing overlay');
                 clearInterval(interval);
                 closeWelcomeOverlay();
             }
@@ -85,28 +105,43 @@ function showWelcomeOverlay(durationMs) {
     }, 1000);
 
     function onCloseEarly() {
+        console.log('Close button clicked');
         clearInterval(interval);
         closeWelcomeOverlay();
     }
 
     if (closeBtn) {
         closeBtn.addEventListener('click', onCloseEarly, { once: true });
+        console.log('Close button listener attached');
+    } else {
+        console.warn('Close button not found');
     }
 
-    // prevent interacting with page via clicks behind overlay
+    // Prevent clicks behind overlay
     overlay.addEventListener('click', function (ev) {
         if (ev.target === overlay) {
             ev.stopPropagation();
+            console.log('Overlay background clicked');
         }
     });
+    
+    console.log('Welcome overlay should now be visible');
 }
 
 function closeWelcomeOverlay() {
+    console.log('closeWelcomeOverlay called');
+    
     const overlay = document.getElementById('welcomeOverlay');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) {
+        overlay.style.display = 'none';
+        console.log('Welcome overlay closed');
+    } else {
+        console.error('Could not find overlay to close');
+    }
+    
     document.body.classList.remove('welcome-active');
-    // Do not persist any seen flag — always show the banner on login per user request
 }
+
 
 // Enhanced editor functionality
 let editorHistory = {
@@ -211,14 +246,7 @@ function updateTeamDisplay() {
     console.log('updateTeamDisplay called with:', currentTeam);
     
     if (currentTeam) {
-        // show welcome banner immediately for debugging and reliability
-        try {
-            console.log('updateTeamDisplay: attempting to show welcome overlay now');
-            showWelcomeOverlay(WELCOME_DURATION_MS);
-            console.log('updateTeamDisplay: showWelcomeOverlay called');
-        } catch (e) {
-            console.error('updateTeamDisplay: error calling showWelcomeOverlay', e);
-        }
+        // Update team information display
         const teamNameEl = document.getElementById('teamName');
         const teamLeaderEl = document.getElementById('teamLeader');
         const studentIdEl = document.getElementById('studentId');
@@ -245,11 +273,16 @@ function updateTeamDisplay() {
             pcIPEl.textContent = `Email: ${currentTeam.email || 'Unknown'}`;
             console.log('Set email to:', pcIPEl.textContent);
         }
+        
+        // Show welcome banner after team display is updated
+        console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
+        maybeShowWelcomeBanner();
+        
     } else {
         console.error('No currentTeam data available for display');
     }
-    
 }
+
 
 function showLoginPrompt() {
     document.getElementById('loadingOverlay').style.display = 'none';
