@@ -311,7 +311,7 @@ function updateTeamDisplay() {
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
         if (currentTeam.isFirstTimeUser) {
             maybeShowWelcomeBanner();
-            await markUserAsNotFirstTime();
+            markUserAsNotFirstTime();
         }
         
     } else {
@@ -319,7 +319,7 @@ function updateTeamDisplay() {
     }
 }
 
-async function markUserAsNotFirstTime() {
+function markUserAsNotFirstTime() {
     try {
         const response = await fetch('/isFirstTimeUser', {
             method: 'GET',
