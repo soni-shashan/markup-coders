@@ -123,80 +123,21 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <!-- Welcome Banner (shown on first login) -->
-<!-- Welcome Banner (shown on first login) -->
-<div id="welcomeOverlay" class="welcome-overlay">
-    <div class="welcome-banner">
-        <div class="welcome-background">
-            <div class="floating-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-                <div class="shape shape-4"></div>
-            </div>
-        </div>
-        
-        <div class="welcome-content">
-            <div class="welcome-header">
-                <div class="logo-section">
-                    <div class="logo-glow">
-                        <img src="../assets/logo.png" alt="Eye Coders Club" class="welcome-logo">
-                    </div>
-                    <h1 class="welcome-title">Welcome to Eye Coders Club!</h1>
-                    <p class="welcome-subtitle">Where Code Meets Creativity</p>
+    <div id="welcomeOverlay" class="loading-overlay welcome-overlay">
+        <div id="welcomeBanner" class="welcome-banner">
+            <div class="welcome-content">
+                <div class="welcome-text">
+                    <h2>Welcome to Eye Coders Club!</h2>
+                    <p>Get ready to code amazing projects</p>
+                    <p class="countdown-text">This banner will close in: <span id="welcomeCountdown">05:00</span></p>
                 </div>
-            </div>
-            
-            <div class="welcome-body">
-                <div class="feature-grid">
-                    <div class="feature-item">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Build Amazing Projects</h3>
-                        <p>Create stunning web experiences</p>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">💡</div>
-                        <h3>Learn & Grow</h3>
-                        <p>Enhance your coding skills</p>
-                    </div>
-                    <div class="feature-item">
-                        <div class="feature-icon">🏆</div>
-                        <h3>Compete & Win</h3>
-                        <p>Show your coding prowess</p>
-                    </div>
+                <div class="welcome-image-wrap">
+                    <img id="welcomeImage" src="https://images.unsplash.com/photo-1503264116251-35a269479413?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Welcome" />
                 </div>
-                
-                <div class="countdown-section">
-                    <div class="countdown-container">
-                        <div class="countdown-label">Get ready! Starting in:</div>
-                        <div class="countdown-display">
-                            <div class="time-unit">
-                                <span id="countdownMinutes" class="time-value">05</span>
-                                <span class="time-label">MIN</span>
-                            </div>
-                            <div class="time-separator">:</div>
-                            <div class="time-unit">
-                                <span id="countdownSeconds" class="time-value">00</span>
-                                <span class="time-label">SEC</span>
-                            </div>
-                        </div>
-                        <div class="countdown-progress">
-                            <div id="progressBar" class="progress-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="welcome-footer">
-                <button id="welcomeClose" class="welcome-close-btn">
-                    <span class="btn-text">Start Coding Now</span>
-                    <span class="btn-icon">→</span>
-                </button>
-                <p class="welcome-note">Ready to create something amazing? Let's begin!</p>
+                <button id="welcomeClose" class="welcome-close-btn">Continue Coding</button>
             </div>
         </div>
     </div>
-</div>
-
 
     <!-- Keyboard Shortcuts Modal -->
     <div id="shortcutsModal" class="shortcuts-modal">
