@@ -643,7 +643,8 @@ app.get('/auth/status', (req, res) => {
                 teamLeaderName: req.user.teamLeaderName,
                 email: req.user.email,
                 studentId: req.user.studentId,
-                profilePicture: req.user.profilePicture
+                profilePicture: req.user.profilePicture,
+                isFirstTimeUser: req.user.isFirstTimeUser
             }
         });
     } else {
