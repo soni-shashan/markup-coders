@@ -276,6 +276,10 @@ function setupEventListeners() {
     } else {
         console.warn('submitBtn not found; submit functionality disabled');
     }
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
     
     const shortcutsHint = document.querySelector('.shortcuts-hint');
     if (shortcutsHint) {
