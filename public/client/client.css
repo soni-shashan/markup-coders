@@ -1005,6 +1005,7 @@ button:focus, input:focus, textarea:focus {
     flex-direction: column;
     align-items: center;
     min-height: 500px;
+    min-width: 800px;
 }
 
 .welcome-text h2 {
