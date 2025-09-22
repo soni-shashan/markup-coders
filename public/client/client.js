@@ -221,7 +221,7 @@ async function initializeInterface() {
         
         if (currentTeam) {
             console.log('Team found, updating display...');
-            updateTeamDisplay();
+            await updateTeamDisplay();
             const submitBtnEl = document.getElementById('submitBtn');
             if (submitBtnEl) {
                 submitBtnEl.disabled = false;
@@ -310,7 +310,7 @@ async function updateTeamDisplay() {
         // Show welcome banner after team display is updated
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
         if (currentTeam.isFirstTimeUser) {
-            maybeShowWelcomeBanner();
+            await maybeShowWelcomeBanner();
             await markUserAsNotFirstTime();
         }
         
