@@ -605,7 +605,7 @@ app.get('/isFirstTimeUser', requireAuth, (req, res) => {
             message: 'Not authenticated'
         });
     }
-}
+});
 
 app.get('/auth/logout', (req, res) => {
     const teamName = req.user ? req.user.teamName : 'Unknown';
