@@ -2,20 +2,12 @@ let currentTeam = null;
 let autoSaveInterval = null;
 let restoreData = null;
 
-// Welcome banner configuration
-const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
-function maybeShowWelcomeBanner() {
-    try {
-        console.log('maybeShowWelcomeBanner: entered', { currentTeam: !!currentTeam });
-        
-        if (!currentTeam) {
-            console.log('maybeShowWelcomeBanner: no currentTeam yet, retrying shortly');
-            setTimeout(maybeShowWelcomeBanner, 300);
+setTimeout(maybeShowWelcomeBanner, 300);
             return;
         }
         
-        // Wait a bit to ensure DOM is ready
+        // Wait a bit more to ensure DOM is ready
         setTimeout(() => {
             console.log('maybeShowWelcomeBanner: showing welcome overlay');
             showWelcomeOverlay(WELCOME_DURATION_MS);
@@ -30,100 +22,103 @@ function showWelcomeOverlay(durationMs) {
     console.log('showWelcomeOverlay called', { durationMs });
     
     const overlay = document.getElementById('welcomeOverlay');
-    const minutesEl = document.getElementById('countdownMinutes');
-    const secondsEl = document.getElementById('countdownSeconds');
-    const progressBar = document.getElementById('progressBar');
+    const countdownEl = document.getElementById('welcomeCountdown');
     const closeBtn = document.getElementById('welcomeClose');
 
     console.log('Elements found:', { 
         overlay: !!overlay, 
-        minutes: !!minutesEl, 
-        seconds: !!secondsEl,
-        progressBar: !!progressBar,
+        countdown: !!countdownEl, 
         closeBtn: !!closeBtn 
     });
 
-    if (!overlay || !minutesEl || !secondsEl || !progressBar) {
-        console.error('showWelcomeOverlay: required elements not found');
+    if (!overlay) {
+        console.error('showWelcomeOverlay: overlay element not found');
+        return;
+    }
+    
+    if (!countdownEl) {
+        console.error('showWelcomeOverlay: countdown element not found');
         return;
     }
 
     // Show the overlay
-    overlay.style.display = 'flex';
+    try {
+        overlay.style.display = 'flex';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '10000';
+        overlay.style.pointerEvents = 'auto';
+        overlay.style.background = 'rgba(0, 0, 0, 0.8)';
+        
+        console.log('Overlay styles applied successfully');
+    } catch (e) {
+        console.error('Could not apply overlay styles', e);
+    }
+
     document.body.classList.add('welcome-active');
     overlay.setAttribute('aria-hidden', 'false');
 
-    const totalSeconds = Math.floor(durationMs / 1000);
-    let remainingSeconds = totalSeconds;
-    
-    console.log('Starting countdown with', remainingSeconds, 'seconds');
+    let remaining = Math.max(0, Math.floor(durationMs / 1000));
+    console.log('Starting countdown with', remaining, 'seconds');
 
-    function updateCountdown() {
-        const minutes = Math.floor(remainingSeconds / 60);
-        const seconds = remainingSeconds % 60;
-        
-        // Update display
-        minutesEl.textContent = minutes.toString().padStart(2, '0');
-        secondsEl.textContent = seconds.toString().padStart(2, '0');
-        
-        // Update progress bar
-        const progressPercentage = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
-        progressBar.style.width = progressPercentage + '%';
-        
-        console.log(`Countdown: ${minutes}:${seconds.toString().padStart(2, '0')} (${progressPercentage.toFixed(1)}%)`);
+    function formatMMSS(sec) {
+        const m = Math.floor(sec / 60).toString().padStart(2, '0');
+        const s = (sec % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
     }
 
-    // Initial update
-    updateCountdown();
+    // Initialize countdown
+    countdownEl.textContent = formatMMSS(remaining);
 
-    const countdownInterval = setInterval(() => {
-        remainingSeconds--;
-        
-        if (remainingSeconds < 0) {
-            remainingSeconds = 0;
-            updateCountdown();
-            clearInterval(countdownInterval);
-            console.log('Countdown finished, closing overlay');
+    const interval = setInterval(() => {
+        try {
+            remaining -= 1;
+            if (remaining < 0) remaining = 0;
+            
+            countdownEl.textContent = formatMMSS(remaining);
+            console.log('Countdown:', formatMMSS(remaining));
+            
+            if (remaining <= 0) {
+                console.log('Countdown finished, closing overlay');
+                clearInterval(interval);
+                closeWelcomeOverlay();
+            }
+        } catch (e) {
+            console.error('Countdown error', e);
+            clearInterval(interval);
             closeWelcomeOverlay();
-            return;
         }
-        
-        updateCountdown();
     }, 1000);
 
     function onCloseEarly() {
         console.log('Close button clicked');
-        clearInterval(countdownInterval);
+        clearInterval(interval);
         closeWelcomeOverlay();
     }
 
     if (closeBtn) {
         closeBtn.addEventListener('click', onCloseEarly, { once: true });
         console.log('Close button listener attached');
+    } else {
+        console.warn('Close button not found');
     }
 
-    // Close on overlay background click
-    overlay.addEventListener('click', function(ev) {
+    // Prevent clicks behind overlay
+    overlay.addEventListener('click', function (ev) {
         if (ev.target === overlay) {
+            ev.stopPropagation();
             console.log('Overlay background clicked');
-            clearInterval(countdownInterval);
-            closeWelcomeOverlay();
         }
     });
-
-    // Close on Escape key
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            console.log('Escape key pressed');
-            clearInterval(countdownInterval);
-            closeWelcomeOverlay();
-            document.removeEventListener('keydown', handleEscape);
-        }
-    };
     
-    document.addEventListener('keydown', handleEscape);
-    
-    console.log('Welcome overlay should now be visible with working countdown');
+    console.log('Welcome overlay should now be visible');
 }
 
 function closeWelcomeOverlay() {
@@ -131,38 +126,14 @@ function closeWelcomeOverlay() {
     
     const overlay = document.getElementById('welcomeOverlay');
     if (overlay) {
-        // Add closing animation
-        overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
-        
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            overlay.style.animation = '';
-            console.log('Welcome overlay closed');
-        }, 500);
+        overlay.style.display = 'none';
+        console.log('Welcome overlay closed');
+    } else {
+        console.error('Could not find overlay to close');
     }
     
     document.body.classList.remove('welcome-active');
 }
-
-// Add fadeOut animation to CSS
-const fadeOutKeyframes = `
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-        transform: scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-}`;
-
-// Inject the fadeOut animation
-const style = document.createElement('style');
-style.textContent = fadeOutKeyframes;
-document.head.appendChild(style);
-
-
 
 
 // Enhanced editor functionality
