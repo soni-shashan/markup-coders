@@ -142,6 +142,10 @@ function showWelcomeOverlay(durationMs) {
             clearInterval(countdownInterval);
             console.log('Countdown finished, closing overlay');
             startCountdown(30,'imageBtn','timer')
+            const imageBtn = document.getElementById('imageBtn');
+            if (imageBtn) {
+                imageBtn.disabled = true; 
+            }
             closeWelcomeOverlay();
             return;
         }
