@@ -313,6 +313,7 @@ async function updateTeamDisplay() {
             await maybeShowWelcomeBanner();
             await markUserAsNotFirstTime();
         }
+        console.log(currentTeam.isFirstTimeUser)
         
     } else {
         console.error('No currentTeam data available for display');
