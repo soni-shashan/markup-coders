@@ -11,8 +11,12 @@ const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
  */
 function maybeShowWelcomeBanner() {
     try {
-        if (!currentTeam || !currentTeam.id) return;
-        const key = `welcome_seen_${currentTeam.id}`;
+        // compute a reliable per-team key: prefer id, then studentId, then email, then teamName
+        if (!currentTeam) return;
+        const teamKeyCandidate = currentTeam.id || currentTeam.studentId || currentTeam.email || currentTeam.teamName;
+        if (!teamKeyCandidate) return; // cannot determine unique team key
+
+        const key = `welcome_seen_${teamKeyCandidate}`;
         const seenDataRaw = localStorage.getItem(key);
         if (seenDataRaw) return; // already seen for this team
 
@@ -32,6 +36,7 @@ function showWelcomeOverlay(durationMs, storageKey) {
 
     document.body.classList.add('welcome-active');
     overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
 
     let remaining = Math.max(0, Math.floor(durationMs / 1000));
 
@@ -41,12 +46,20 @@ function showWelcomeOverlay(durationMs, storageKey) {
         return `${m}:${s}`;
     }
 
+    // initialize
     countdownEl.textContent = formatMMSS(remaining);
 
     const interval = setInterval(() => {
-        remaining -= 1;
-        countdownEl.textContent = formatMMSS(remaining);
-        if (remaining <= 0) {
+        try {
+            remaining -= 1;
+            if (remaining < 0) remaining = 0;
+            countdownEl.textContent = formatMMSS(remaining);
+            if (remaining <= 0) {
+                clearInterval(interval);
+                closeWelcomeOverlay(storageKey);
+            }
+        } catch (e) {
+            console.error('Countdown error', e);
             clearInterval(interval);
             closeWelcomeOverlay(storageKey);
         }
@@ -61,9 +74,11 @@ function showWelcomeOverlay(durationMs, storageKey) {
         closeBtn.addEventListener('click', onCloseEarly, { once: true });
     }
 
-    // ensure overlay clicks outside don't close or interact with page
+    // prevent interacting with page via clicks behind overlay
     overlay.addEventListener('click', function (ev) {
-        if (ev.target === overlay) ev.stopPropagation();
+        if (ev.target === overlay) {
+            ev.stopPropagation();
+        }
     });
 }
 
@@ -72,7 +87,13 @@ function closeWelcomeOverlay(storageKey) {
     if (overlay) overlay.style.display = 'none';
     document.body.classList.remove('welcome-active');
     try {
-        if (storageKey) localStorage.setItem(storageKey, JSON.stringify({ seenAt: Date.now() }));
+        if (storageKey) {
+            try {
+                localStorage.setItem(storageKey, JSON.stringify({ seenAt: Date.now() }));
+            } catch (e) {
+                console.warn('localStorage set failed in closeWelcomeOverlay', e);
+            }
+        }
     } catch (e) {
         console.warn('Could not persist welcome seen flag', e);
     }

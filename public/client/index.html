@@ -24,7 +24,7 @@
             </div>
             <div class="header-actions">
                 <button id="submitBtn" class="submit-btn" disabled>Submit Code</button>
-                <button id="logoutBtn" class="logout-btn">Log Out</button>
+                <button id="logoutBtn" class="logout-btn" onclick="window.location.href='https://markup-coders.klevoradigital.in/auth/logout'">Log Out</button>
             </div>
         </header>
 
@@ -123,11 +123,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <!-- Welcome Banner (shown on first login) -->
-    <div id="welcomeOverlay" class="welcome-overlay" style="display:none;">
-        <div id="welcomeBanner" class="welcome-banner">
+    <div id="welcomeOverlay" class="welcome-overlay" style="display:none;" aria-hidden="true">
+        <div id="welcomeBanner" class="welcome-banner" role="dialog" aria-modal="true">
             <button id="welcomeClose" class="welcome-close" aria-label="Close">×</button>
             <div class="welcome-image-wrap">
-                <img id="welcomeImage" src="https://www.google.com/imgres?q=image&imgurl=https%3A%2F%2Fplus.unsplash.com%2Fpremium_photo-1664474619075-644dd191935f%3Ffm%3Djpg%26q%3D60%26w%3D3000%26ixlib%3Drb-4.1.0%26ixid%3DM3wxMjA3fDB8MHxzZWFyY2h8MXx8aW1hZ2V8ZW58MHx8MHx8fDA%253D&imgrefurl=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fimage&docid=ExDvm63D_wCvSM&tbnid=2brKLR3s5kTpPM&vet=12ahUKEwizzaagzOuPAxX3U2wGHQlxLHUQM3oECBgQAA..i&w=3000&h=2003&hcb=2&ved=2ahUKEwizzaagzOuPAxX3U2wGHQlxLHUQM3oECBgQAA" alt="Welcome" />
+                <!-- Use a clean Unsplash image URL that reliably loads -->
+                <img id="welcomeImage" src="https://images.unsplash.com/photo-1503264116251-35a269479413?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Welcome" />
             </div>
             <div class="welcome-text">
                 <h2>Welcome to Eye Coders Club</h2>
