@@ -644,7 +644,8 @@ app.get('/auth/status', (req, res) => {
                 email: req.user.email,
                 studentId: req.user.studentId,
                 profilePicture: req.user.profilePicture,
-                isFirstTimeUser: req.user.isFirstTimeUser
+                isFirstTimeUser: req.user.isFirstTimeUser,
+                image: req.user.image || null
             }
         });
     } else {
@@ -707,7 +708,7 @@ app.get('/seb-download', (req, res) => {
 // Admin Routes
 app.post('/api/admin/teams', async (req, res) => {
     try {
-        const { teamName, teamLeaderName,studentId, email } = req.body;
+        const { teamName, teamLeaderName,studentId, email, image } = req.body;
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -722,7 +723,8 @@ app.post('/api/admin/teams', async (req, res) => {
             teamName: teamName.trim(),
             teamLeaderName: teamLeaderName.trim(),
             email: email.toLowerCase().trim(),
-            studentId: studentId.trim()
+            studentId: studentId.trim(),
+            image: image.trim() || null
         });
         
         await team.save();
@@ -872,12 +874,17 @@ app.post('/api/admin/bulk-import', upload.single('excelFile'), async (req, res) 
                     });
                     continue;
                 }
-
+                if(teamData.image.trim()=="1"){
+                    teamData.image='https://drive.google.com/thumbnail?id=1IWi0Xn1ksNWxyG2Y9nCUO2yKy44FKEfG&sz=w1000'
+                }else if (teamData.image.trim()=="2"){
+                    teamData.image='https://drive.google.com/thumbnail?id=1OlFq1OExHQJZ04xz5wXP0k2ln1gmTZDS&sz=w1000'
+                }
                 const team = new Team({
                     teamName: teamData.teamName,
                     teamLeaderName: teamData.teamLeaderName,
                     studentId: teamData.studentId,
-                    email: teamData.email
+                    email: teamData.email,
+                    image: teamData.image.trim()|| null
                 });
 
                 await team.save();
@@ -928,40 +935,27 @@ app.get('/api/admin/download-template', (req, res) => {
                 'Team Name': 'Alpha Coders',
                 'Team Leader': 'John Doe',
                 'Student ID': 'CS001',
-                'Email': 'john.doe@gmail.com'
+                'Email': 'john.doe@gmail.com',
+                'image':'1'
             },
             {
                 'Team Name': 'Beta Developers',
                 'Team Leader': 'Jane Smith',
                 'Student ID': 'CS002',
-                'Email': 'jane.smith@gmail.com'
+                'Email': 'jane.smith@gmail.com',
+                'image':'2'
             },
             {
                 'Team Name': 'Gamma Tech',
                 'Team Leader': 'Bob Johnson',
                 'Student ID': 'CS003',
-                'Email': 'bob.johnson@gmail.com'
+                'Email': 'bob.johnson@gmail.com',
+                'image':'1'
             }
         ];
 
         const workbook = xlsx.utils.book_new();
         const worksheet = xlsx.utils.json_to_sheet(sampleData);
-
-        const instructions = [
-            ['Instructions:'],
-            ['1. Fill in the team data in the columns below'],
-            ['2. Team Name must be unique'],
-            ['3. Email must be unique and in valid format (e.g., john@gmail.com)'],
-            ['4. Student ID must be unique'],
-            ['5. All fields are required'],
-            ['6. You can add more rows as needed'],
-            ['7. Teams will login using Google OAuth with the provided email'],
-            [''],
-            ['Sample Data:']
-        ];
-
-        const instructionsWS = xlsx.utils.aoa_to_sheet(instructions);
-        xlsx.utils.book_append_sheet(workbook, instructionsWS, 'Instructions');
         
         xlsx.utils.book_append_sheet(workbook, worksheet, 'Teams Data');
 

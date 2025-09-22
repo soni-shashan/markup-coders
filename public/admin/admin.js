@@ -55,7 +55,8 @@ async function handleTeamSubmit(event) {
         teamName: document.getElementById('teamName').value.trim(),
         teamLeaderName: document.getElementById('teamLeaderName').value.trim(),
         studentId: document.getElementById('studentId').value.trim(),
-        email: document.getElementById('email').value.trim().toLowerCase()
+        email: document.getElementById('email').value.trim().toLowerCase(),
+        image: document.getElementById('image').value.trim() || null
     };
     
     // Validate email format on frontend

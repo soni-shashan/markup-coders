@@ -34,7 +34,8 @@ function showWelcomeOverlay(durationMs) {
     const secondsEl = document.getElementById('countdownSeconds');
     const progressBar = document.getElementById('progressBar');
     const closeBtn = document.getElementById('welcomeClose');
-
+    const image = document.getElementById('welcomeImage');
+    image.src = currentTeam.image;
     console.log('Elements found:', { 
         overlay: !!overlay, 
         minutes: !!minutesEl, 
