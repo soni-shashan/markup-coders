@@ -595,9 +595,19 @@ app.get('/auth/google/callback',
 
 app.get('/isFirstTimeUser', requireAuth, (req, res) => {
     if (req.user) {
+         Team.findOneAndUpdate(
+            { teamName: req.user.teamName, email: req.user.email },
+            {
+                isFirstTimeUser: false
+            },
+            { 
+                upsert: true, 
+                new: true 
+            }
+        );
         res.json({
             success: true,
-            isFirstTimeUser: req.user.isFirstTimeUser || false
+            isFirstTimeUser: req.user.isFirstTimeUser
         });
     } else {
         res.status(401).json({

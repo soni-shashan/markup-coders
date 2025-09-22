@@ -309,13 +309,39 @@ function updateTeamDisplay() {
         
         // Show welcome banner after team display is updated
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
-        maybeShowWelcomeBanner();
+        if (currentTeam.isFirstTimeUser) {
+            maybeShowWelcomeBanner();
+            await markUserAsNotFirstTime();
+        }
         
     } else {
         console.error('No currentTeam data available for display');
     }
 }
 
+async function markUserAsNotFirstTime() {
+    try {
+        const response = await fetch('/isFirstTimeUser', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const result = await response.json();
+        if (result.success) {
+            console.log('User marked as not first time successfully');
+            currentTeam.isFirstTimeUser = false;
+        } else {
+            console.error('Failed to mark user as not first time:', result.message);
+        }
+    } catch (error) {
+        console.error('Error marking user as not first time:', error);
+    }
+}
 
 function showLoginPrompt() {
     document.getElementById('loadingOverlay').style.display = 'none';
