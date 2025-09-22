@@ -14,42 +14,19 @@ function maybeShowWelcomeBanner() {
             setTimeout(maybeShowWelcomeBanner, 300);
             return;
         }
-
-        const candidate = currentTeam.id || currentTeam.teamId || currentTeam.studentId || currentTeam.email || currentTeam.teamName;
-        if (!candidate) {
-            console.warn('maybeShowWelcomeBanner: no team identifier available');
-            return;
-        }
-
-        const safeKey = encodeURIComponent(String(candidate));
-        const storageKeyNew = `welcome_seen_${safeKey}`;
-        const storageKeyLegacy = `welcomeSeen_${candidate}`;
-        const seenNew = localStorage.getItem(storageKeyNew);
-        const seenLegacy = localStorage.getItem(storageKeyLegacy);
-        console.log('maybeShowWelcomeBanner: keys', { storageKeyNew, storageKeyLegacy, seenNew: !!seenNew, seenLegacy: !!seenLegacy });
-
-        // Allow dev/test override via URL param: ?showWelcome=1
-        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-        const forceShow = params && params.get('showWelcome') === '1';
-        if (!forceShow && (seenNew || seenLegacy)) {
-            console.log('maybeShowWelcomeBanner: banner suppressed because seen flag present');
-            return; // already seen by either scheme
-        }
-
-        console.log('maybeShowWelcomeBanner: showing banner', { forceShow });
-        // call the overlay
-        showWelcomeOverlay(WELCOME_DURATION_MS, storageKeyNew);
+        // Always show the welcome banner on login (no storage keys)
+        showWelcomeOverlay(WELCOME_DURATION_MS);
     } catch (e) {
         console.error('maybeShowWelcomeBanner error', e);
     }
 }
 
-function showWelcomeOverlay(durationMs, storageKey) {
+function showWelcomeOverlay(durationMs) {
     const overlay = document.getElementById('welcomeOverlay');
     const countdownEl = document.getElementById('welcomeCountdown');
     const closeBtn = document.getElementById('welcomeClose');
 
-    console.log('showWelcomeOverlay called', { durationMs, storageKey, overlay: !!overlay, countdown: !!countdownEl, closeBtn: !!closeBtn });
+    console.log('showWelcomeOverlay called', { durationMs, overlay: !!overlay, countdown: !!countdownEl, closeBtn: !!closeBtn });
 
     if (!overlay) {
         console.warn('showWelcomeOverlay: overlay element not found');
@@ -98,18 +75,18 @@ function showWelcomeOverlay(durationMs, storageKey) {
             countdownEl.textContent = formatMMSS(remaining);
             if (remaining <= 0) {
                 clearInterval(interval);
-                closeWelcomeOverlay(storageKey);
+                closeWelcomeOverlay();
             }
         } catch (e) {
             console.error('Countdown error', e);
             clearInterval(interval);
-            closeWelcomeOverlay(storageKey);
+            closeWelcomeOverlay();
         }
     }, 1000);
 
     function onCloseEarly() {
         clearInterval(interval);
-        closeWelcomeOverlay(storageKey);
+        closeWelcomeOverlay();
     }
 
     if (closeBtn) {
@@ -124,21 +101,11 @@ function showWelcomeOverlay(durationMs, storageKey) {
     });
 }
 
-function closeWelcomeOverlay(storageKey) {
+function closeWelcomeOverlay() {
     const overlay = document.getElementById('welcomeOverlay');
     if (overlay) overlay.style.display = 'none';
     document.body.classList.remove('welcome-active');
-    try {
-        if (storageKey) {
-            try {
-                localStorage.setItem(storageKey, JSON.stringify({ seenAt: Date.now() }));
-            } catch (e) {
-                console.warn('localStorage set failed in closeWelcomeOverlay', e);
-            }
-        }
-    } catch (e) {
-        console.warn('Could not persist welcome seen flag', e);
-    }
+    // Do not persist any seen flag — always show the banner on login per user request
 }
 
 // Enhanced editor functionality
