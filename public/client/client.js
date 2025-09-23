@@ -1064,13 +1064,64 @@ function runCode() {
     }
 }
 
+// Lightweight non-blocking confirm modal to replace window.confirm (some browsers/SEB block native dialogs)
+function showConfirm(message, options = { confirmText: 'OK', cancelText: 'Cancel' }) {
+    return new Promise((resolve) => {
+        // Reuse existing modal if present
+        let modal = document.getElementById('customConfirmModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'customConfirmModal';
+            modal.style.cssText = `position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 10002;`;
+            modal.innerHTML = `
+                <div id="customConfirmBackdrop" style="position: absolute; inset:0; background: rgba(0,0,0,0.45);"></div>
+                <div style="position: relative; background: #fff; color: #111; padding: 18px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); font-family: inherit;">
+                    <div id="customConfirmMessage" style="margin-bottom: 14px; white-space: pre-wrap;"></div>
+                    <div style="display:flex; justify-content: flex-end; gap: 8px;">
+                        <button id="customConfirmCancel" style="background: transparent; border: 1px solid #ccc; padding: 8px 12px; border-radius:6px;">${options.cancelText}</button>
+                        <button id="customConfirmOk" style="background: #0078d4; color: white; border: none; padding: 8px 12px; border-radius:6px;">${options.confirmText}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        const messageEl = document.getElementById('customConfirmMessage');
+        const okBtn = document.getElementById('customConfirmOk');
+        const cancelBtn = document.getElementById('customConfirmCancel');
+        const backdrop = document.getElementById('customConfirmBackdrop');
+
+        if (messageEl) messageEl.textContent = message;
+
+        function cleanup() {
+            if (okBtn) okBtn.removeEventListener('click', onOk);
+            if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+            if (backdrop) backdrop.removeEventListener('click', onCancel);
+            // hide modal instead of removing so other calls can reuse
+            if (modal) modal.style.display = 'none';
+        }
+
+        function onOk() { cleanup(); resolve(true); }
+        function onCancel() { cleanup(); resolve(false); }
+
+        if (okBtn) okBtn.addEventListener('click', onOk);
+        if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+        if (backdrop) backdrop.addEventListener('click', onCancel);
+
+        // show modal
+        modal.style.display = 'flex';
+        // Focus OK for keyboard users
+        if (okBtn) okBtn.focus();
+    });
+}
+
 async function submitCode() {
     if (!currentTeam) {
         showAlert('No team information found. Cannot submit code.', 'error');
         return;
     }
     
-    if (!confirm('Are you sure you want to submit your code? This will save your current work and clear auto-saved data.')) {
+    if (!(await showConfirm('Are you sure you want to submit your code? This will save your current work and clear auto-saved data.', { confirmText: 'Yes, submit', cancelText: 'Cancel' }))) {
         return;
     }
     
@@ -1144,8 +1195,9 @@ async function clearTempCode() {
     }
 }
 
-function logout() {
-    if (confirm('Are you sure you want to log out?')) {
+async function logout() {
+    const ok = await showConfirm('Are you sure you want to log out?', { confirmText: 'Log out', cancelText: 'Stay' });
+    if (ok) {
         window.location.href = '/auth/logout';
     }
 }
