@@ -800,7 +800,18 @@ app.delete('/api/admin/teams/:id', async (req, res) => {
 });
 
 app.post('/api/admin/bulk-import', upload.single('excelFile'), async (req, res) => {
+    // extend timeouts for potentially long-running bulk imports (10 minutes)
     try {
+        try {
+            req.setTimeout(10 * 60 * 1000); // 10 minutes
+        } catch (e) {
+            // ignore if not available
+        }
+        try {
+            res.setTimeout(10 * 60 * 1000); // 10 minutes
+        } catch (e) {
+            // ignore
+        }
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -928,10 +939,31 @@ app.post('/api/admin/bulk-import', upload.single('excelFile'), async (req, res) 
             fs.unlinkSync(req.file.path);
         }
         
-        res.status(500).json({
-            success: false,
-            message: 'Error processing Excel file: ' + error.message
-        });
+        // ensure API consumers get JSON instead of HTML error pages
+        if (!res.headersSent) {
+            res.status(500).json({
+                success: false,
+                message: 'Error processing Excel file: ' + (error && error.message ? error.message : String(error))
+            });
+        }
+    }
+});
+
+// Global error handler for API routes: return JSON instead of HTML error pages
+app.use((err, req, res, next) => {
+    console.error('Unhandled error middleware:', err && err.stack ? err.stack : err);
+    // If request looks like API (starts with /api) or accepts JSON, send JSON response
+    const wantsJson = req.path && req.path.startsWith('/api') || (req.headers && req.headers.accept && req.headers.accept.indexOf('application/json') !== -1);
+    if (wantsJson) {
+        if (!res.headersSent) {
+            res.status(err && err.status ? err.status : 500).json({
+                success: false,
+                message: err && err.message ? err.message : 'Internal Server Error'
+            });
+        }
+    } else {
+        // Fallback to default Express handler (will produce HTML)
+        next(err);
     }
 });
 
@@ -1375,7 +1407,7 @@ setInterval(() => {
     });
 }, 300000); // Every 5 minutes
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`Client Interface: http://localhost:${PORT}/client`);
     console.log(`Admin Panel: http://localhost:${PORT}/admin`);
@@ -1384,3 +1416,14 @@ app.listen(PORT, () => {
     console.log(`Health Check: http://localhost:${PORT}/health`);
     console.log(`SEB Download: http://localhost:${PORT}/seb-download`);
 });
+
+// Increase server timeout to allow long-running uploads/processing (e.g., bulk imports)
+try {
+    server.setTimeout(10 * 60 * 1000); // 10 minutes
+    // also set headers timeout slightly larger
+    if (server.headersTimeout !== undefined) {
+        server.headersTimeout = 11 * 60 * 1000; // 11 minutes
+    }
+} catch (e) {
+    console.warn('Could not set server timeouts:', e && e.message ? e.message : e);
+}
