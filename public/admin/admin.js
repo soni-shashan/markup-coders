@@ -572,12 +572,37 @@ async function startBulkImport() {
             method: 'POST',
             body: formData
         });
-        
-        const result = await response.json();
-        
+
+        // If server returns non-JSON (for example HTML error page), handle gracefully
+        const contentType = response.headers.get('content-type') || '';
+        let result;
+
+        if (!response.ok) {
+            // Try to get JSON error message, else fall back to text
+            if (contentType.includes('application/json')) {
+                const errJson = await response.json().catch(() => null);
+                const msg = errJson && errJson.message ? errJson.message : `Server error ${response.status}`;
+                throw new Error(msg);
+            } else {
+                const text = await response.text().catch(() => 'Unknown server error');
+                throw new Error(`Server error ${response.status}: ${text.slice(0, 500)}`);
+            }
+        }
+
+        if (contentType.includes('application/json')) {
+            result = await response.json().catch(async (e) => {
+                const fallbackText = await response.text().catch(() => 'Unable to read server response');
+                throw new Error('Invalid JSON response from server: ' + fallbackText.slice(0, 500));
+            });
+        } else {
+            // Server responded 200 but didn't send JSON
+            const text = await response.text().catch(() => 'No response body');
+            throw new Error('Unexpected server response (not JSON): ' + text.slice(0, 500));
+        }
+
         // Close bulk import modal
         closeBulkImportModal();
-        
+
         // Show results
         showImportResults(result);
         

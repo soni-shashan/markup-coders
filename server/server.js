@@ -874,11 +874,18 @@ app.post('/api/admin/bulk-import', upload.single('excelFile'), async (req, res) 
                     });
                     continue;
                 }
-                if(teamData.image.trim()=="1"){
-                    let imageUrl='https://drive.google.com/thumbnail?id=1p0uxUGUcTM0O5qxzJrVXl0iSp2UPLo3h&sz=w1000'
-                }else if (teamData.image.trim()=="2"){
-                    let imageUrl='https://drive.google.com/thumbnail?id=1XagYG0Vr34yf_FNiH5UiafRvtLS_PlIS&sz=w1000'
+                // Determine image URL safely. teamData.image may be undefined/null.
+                let imageUrl = null;
+                const imgVal = (teamData.image || '').toString().trim();
+                if (imgVal === '1') {
+                    imageUrl = 'https://drive.google.com/thumbnail?id=1p0uxUGUcTM0O5qxzJrVXl0iSp2UPLo3h&sz=w1000';
+                } else if (imgVal === '2') {
+                    imageUrl = 'https://drive.google.com/thumbnail?id=1XagYG0Vr34yf_FNiH5UiafRvtLS_PlIS&sz=w1000';
+                } else if (/^https?:\/\//i.test(imgVal)) {
+                    // If the cell already contains a URL, use it
+                    imageUrl = imgVal;
                 }
+
                 const team = new Team({
                     teamName: teamData.teamName,
                     teamLeaderName: teamData.teamLeaderName,
