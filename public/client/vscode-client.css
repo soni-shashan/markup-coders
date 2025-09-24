@@ -1190,125 +1190,116 @@ body.monokai-theme .login-prompt {
 .live-server-error button:hover {
     background: rgba(255,255,255,0.3);
 }
-
-/* Enhanced folder contents indentation */
-.folder-contents {
-    padding-left: 20px;
-    border-left: 1px solid var(--border-color);
-    margin-left: 8px;
-    position: relative;
-}
-
-.folder-contents::before {
-    content: '';
-    position: absolute;
-    left: -1px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: var(--border-color);
-    opacity: 0.3;
-}
-
-/* Nested folder support */
-.folder-contents .folder-contents {
-    padding-left: 16px;
-}
-
-.folder-contents .folder-contents .folder-contents {
-    padding-left: 12px;
-}
-
-/* Enhanced Folder Actions */
+/* Enhanced Folder Styles */
 .folder-item {
-    position: relative;
-    user-select: none;
-    padding: 4px 16px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 6px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+    min-height: 32px;
 }
 
 .folder-item:hover {
     background: var(--hover-bg);
 }
 
+.folder-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+}
+
+.folder-content i {
+    width: 16px;
+    text-align: center;
+    color: var(--accent-blue);
+}
+
+.folder-content span {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* File Actions for Folders */
 .folder-item .file-actions {
     display: none;
-    gap: 2px;
-    margin-left: auto;
+    gap: 4px;
+    margin-left: 8px;
+    align-items: center;
 }
 
 .folder-item:hover .file-actions {
     display: flex;
 }
 
-/* Make folder action buttons more visible */
 .folder-item .file-actions .file-action-btn {
-    background: none;
-    border: none;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 3px;
-    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    position: relative;
 }
 
 .folder-item .file-actions .file-action-btn:hover {
     color: var(--text-primary);
     background: var(--hover-bg);
+    border-color: var(--accent-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Different colors for different actions */
-.folder-item .file-actions .file-action-btn:first-child {
+/* Different colors for different folder actions */
+.folder-item .file-actions .new-file-btn {
+    color: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+.folder-item .file-actions .new-file-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
     color: var(--accent-blue);
 }
 
-.folder-item .file-actions .file-action-btn:first-child:hover {
-    background: rgba(102, 126, 234, 0.2);
-    color: var(--accent-blue);
+.folder-item .file-actions .new-folder-btn {
+    color: #28a745;
+    border-color: #28a745;
 }
 
-.folder-item .file-actions .file-action-btn:nth-child(2) {
+.folder-item .file-actions .new-folder-btn:hover {
+    background: rgba(40, 167, 69, 0.1);
     color: #28a745;
 }
 
-.folder-item .file-actions .file-action-btn:nth-child(2):hover {
-    background: rgba(40, 167, 69, 0.2);
-    color: #28a745;
+.folder-item .file-actions .delete-btn {
+    color: #dc3545;
+    border-color: #dc3545;
 }
 
-.folder-item .file-actions .file-action-btn:last-child {
+.folder-item .file-actions .delete-btn:hover {
+    background: rgba(220, 53, 69, 0.1);
     color: #dc3545;
 }
 
-.folder-item .file-actions .file-action-btn:last-child:hover {
-    background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+/* Tooltip styles */
+.file-action-btn {
+    position: relative;
 }
 
-/* Folder icon and text layout */
-.folder-item > i {
-    margin-right: 8px;
-    width: 16px;
-    text-align: center;
-}
-
-.folder-item > span {
-    flex: 1;
-}
-
-/* Tooltip enhancement */
-.file-action-btn[title]:hover::after {
+.file-action-btn:hover::before {
     content: attr(title);
     position: absolute;
     bottom: 100%;
@@ -1316,11 +1307,66 @@ body.monokai-theme .login-prompt {
     transform: translateX(-50%);
     background: var(--bg-primary);
     color: var(--text-primary);
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
     font-size: 11px;
     white-space: nowrap;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid var(--border-color);
+    margin-bottom: 4px;
+}
+
+.file-action-btn:hover::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--border-color);
+    z-index: 1001;
+}
+
+/* Folder Contents */
+.folder-contents {
+    padding-left: 20px;
+    border-left: 1px solid var(--border-color);
+    margin-left: 8px;
+}
+
+.folder-item.collapsed + .folder-contents {
+    display: none;
+}
+
+.folder-item.expanded + .folder-contents {
+    display: block;
+}
+
+/* File items inside folders */
+.folder-contents .file-item {
+    padding: 4px 12px;
+    margin-left: 0;
+}
+
+/* Enhanced visibility for dark theme */
+body.dark-theme .folder-item .file-actions .file-action-btn {
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-theme .folder-item .file-actions .file-action-btn:hover {
+    background: var(--bg-secondary);
+}
+
+/* Enhanced visibility for light theme */
+body.light-theme .folder-item .file-actions .file-action-btn {
+    background: #ffffff;
+    border-color: #d0d7de;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+body.light-theme .folder-item .file-actions .file-action-btn:hover {
+    background: #f6f8fa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

@@ -3065,15 +3065,18 @@ getPageContent(pagePath) {
     newFileModal.querySelector('.close-modal').addEventListener('click', () => {
         newFileModal.style.display = 'none';
         this.selectedFolder = null;
+        console.log('Modal closed, selectedFolder reset');
     });
     
     newFileModal.querySelector('.btn-cancel').addEventListener('click', () => {
         newFileModal.style.display = 'none';
         this.selectedFolder = null;
+        console.log('Modal cancelled, selectedFolder reset');
     });
     
-    newFileModal.querySelector('.btn-create').addEventListener('click', () => {
+     newFileModal.querySelector('.btn-create').addEventListener('click', () => {
         const fileName = newFileNameInput.value.trim();
+        console.log('Create button clicked, fileName:', fileName, 'selectedFolder:', this.selectedFolder);
         if (fileName) {
             this.createNewFile(fileName);
             newFileModal.style.display = 'none';
@@ -3164,14 +3167,21 @@ getPageContent(pagePath) {
         return;
     }
 
+    console.log('createNewFile called with:', fileName);
+    console.log('selectedFolder:', this.selectedFolder);
+
     // Determine the full path based on selected folder
     let fullPath = fileName;
     if (this.selectedFolder) {
         fullPath = `${this.selectedFolder}/${fileName}`;
+        console.log('Creating file in folder, full path:', fullPath);
+    } else {
+        console.log('Creating file in root directory:', fullPath);
     }
 
     // Ensure unique filename
     const uniqueFileName = this.getUniqueFileName(fullPath);
+    console.log('Unique filename:', uniqueFileName);
     
     // Determine file type
     const extension = uniqueFileName.split('.').pop().toLowerCase();
@@ -3192,6 +3202,7 @@ getPageContent(pagePath) {
     // If creating in a folder, ensure the folder exists
     if (this.selectedFolder) {
         this.fileSystem.folders.add(this.selectedFolder);
+        console.log('Ensured folder exists:', this.selectedFolder);
     }
     
     this.renderFileTree();
@@ -3200,42 +3211,98 @@ getPageContent(pagePath) {
     
     // Reset selected folder
     this.selectedFolder = null;
+    console.log('Reset selectedFolder to null');
     
     console.log('New file created:', uniqueFileName);
 }
 
 
-    createNewFolder(folderName) {
-    if (!folderName.trim()) {
-        this.showAlert('Please enter a folder name', 'error');
-        return;
-    }
 
-    // Determine the full path based on selected parent folder
-    let fullPath = folderName;
-    if (this.selectedFolder) {
-        fullPath = `${this.selectedFolder}/${folderName}`;
-    }
+    createFolderElement(folderName, files) {
+    const folderContainer = document.createElement('div');
+    
+    const folderItem = document.createElement('div');
+    folderItem.className = 'folder-item expanded';
+    folderItem.dataset.folder = folderName;
+    
+    folderItem.innerHTML = `
+        <div class="folder-content">
+            <i class="fas fa-folder-open"></i>
+            <span>${folderName}</span>
+        </div>
+        <div class="file-actions">
+            <button class="file-action-btn new-file-btn" title="New File in ${folderName}">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="file-action-btn new-folder-btn" title="New Folder in ${folderName}">
+                <i class="fas fa-folder-plus"></i>
+            </button>
+            <button class="file-action-btn delete-btn" title="Delete Folder">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
 
-    if (this.fileSystem.folders.has(fullPath)) {
-        this.showAlert(`Folder "${fullPath}" already exists!`, 'error');
-        return;
-    }
-    
-    this.fileSystem.folders.add(fullPath);
-    
-    // Ensure parent folder exists too
-    if (this.selectedFolder) {
-        this.fileSystem.folders.add(this.selectedFolder);
-    }
-    
-    this.renderFileTree();
-    this.showAlert(`Folder "${fullPath}" created successfully!`, 'success');
-    
-    // Reset selected folder
-    this.selectedFolder = null;
-    
-    console.log('New folder created:', fullPath);
+    const folderContents = document.createElement('div');
+    folderContents.className = 'folder-contents';
+
+    files.forEach(({ path, file }) => {
+        folderContents.appendChild(this.createFileElement(path, file));
+    });
+
+    // Get button references
+    const newFileBtn = folderItem.querySelector('.new-file-btn');
+    const newFolderBtn = folderItem.querySelector('.new-folder-btn');
+    const deleteBtn = folderItem.querySelector('.delete-btn');
+
+    // Add event listeners to buttons
+    newFileBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Creating new file in folder:', folderName);
+        this.showNewFileModal(folderName);
+    });
+
+    newFolderBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Creating new folder in:', folderName);
+        this.showNewFolderModal(folderName);
+    });
+
+    deleteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.deleteFolder(folderName);
+    });
+
+    // Folder click handler (for expand/collapse) - only on the folder content, not buttons
+    const folderContent = folderItem.querySelector('.folder-content');
+    folderContent.addEventListener('click', (e) => {
+        e.stopPropagation();
+        folderItem.classList.toggle('expanded');
+        folderItem.classList.toggle('collapsed');
+        
+        const icon = folderContent.querySelector('i');
+        if (folderItem.classList.contains('expanded')) {
+            icon.className = 'fas fa-folder-open';
+            folderContents.style.display = 'block';
+        } else {
+            icon.className = 'fas fa-folder';
+            folderContents.style.display = 'none';
+        }
+    });
+
+    // Right-click context menu for folders
+    folderItem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.showFileContextMenu(e, folderName, true);
+    });
+
+    folderContainer.appendChild(folderItem);
+    folderContainer.appendChild(folderContents);
+
+    return folderContainer;
 }
 
 
