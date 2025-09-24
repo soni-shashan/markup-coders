@@ -2561,13 +2561,6 @@ addEnhancedLiveReloadScript(htmlContent) {
                             this.currentPage = targetPage;
                             this.updateURL(targetPage);
                             
-                            // Restore scroll position for same page
-                            if (scrollPos.x !== 0 || scrollPos.y !== 0) {
-                                setTimeout(() => {
-                                    window.scrollTo(scrollPos.x, scrollPos.y);
-                                }, 100);
-                            }
-                            
                             console.log('Navigation completed to:', targetPage);
                             return true;
                         } else {
@@ -2601,6 +2594,7 @@ addEnhancedLiveReloadScript(htmlContent) {
                         z-index: 10000;
                         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
                         font-family: Arial, sans-serif;
+                        max-width: 300px;
                     \`;
                     errorDiv.innerHTML = \`
                         <strong>Page Not Found</strong><br>
@@ -2670,25 +2664,33 @@ addEnhancedLiveReloadScript(htmlContent) {
                 },
                 
                 resolveRelativePath: function(href, currentPage) {
+                    console.log('Resolving path:', href, 'from current page:', currentPage);
+                    
                     // Handle different types of links
                     if (href.startsWith('http') || href.startsWith('//')) {
+                        console.log('External link, ignoring:', href);
                         return null; // External link
                     }
                     
                     if (href.startsWith('#')) {
+                        console.log('Anchor link, ignoring:', href);
                         return null; // Anchor link
                     }
                     
                     if (href.startsWith('/')) {
+                        console.log('Absolute path:', href.substring(1));
                         return href.substring(1); // Absolute path
                     }
                     
                     // Handle relative paths
                     const currentDir = currentPage.includes('/') ? currentPage.substring(0, currentPage.lastIndexOf('/')) : '';
+                    console.log('Current directory:', currentDir);
+                    
                     let resolvedPath = href;
                     
                     // Handle ../
                     if (href.startsWith('../')) {
+                        console.log('Going up directory from:', currentDir);
                         const parts = currentDir.split('/').filter(p => p);
                         let upLevels = 0;
                         let tempHref = href;
@@ -2698,8 +2700,15 @@ addEnhancedLiveReloadScript(htmlContent) {
                             tempHref = tempHref.substring(3);
                         }
                         
-                        const newParts = parts.slice(0, -upLevels);
-                        resolvedPath = newParts.length > 0 ? newParts.join('/') + '/' + tempHref : tempHref;
+                        console.log('Going up', upLevels, 'levels, remaining path:', tempHref);
+                        
+                        if (upLevels >= parts.length) {
+                            // Going up to root or beyond
+                            resolvedPath = tempHref;
+                        } else {
+                            const newParts = parts.slice(0, -upLevels);
+                            resolvedPath = newParts.length > 0 ? newParts.join('/') + '/' + tempHref : tempHref;
+                        }
                     } else if (currentDir) {
                         // Handle ./
                         if (href.startsWith('./')) {
@@ -2709,6 +2718,7 @@ addEnhancedLiveReloadScript(htmlContent) {
                         }
                     }
                     
+                    console.log('Resolved path:', resolvedPath);
                     return resolvedPath;
                 }
             };
@@ -2727,7 +2737,7 @@ addEnhancedLiveReloadScript(htmlContent) {
                     const link = e.target.closest('a');
                     if (link && link.href) {
                         const href = link.getAttribute('href');
-                        console.log('Link clicked:', href);
+                        console.log('Link clicked:', href, 'from page:', window.liveServer.currentPage);
                         
                         if (href && (href.endsWith('.html') || href.includes('.html'))) {
                             e.preventDefault();
@@ -2735,7 +2745,7 @@ addEnhancedLiveReloadScript(htmlContent) {
                             
                             const targetPage = window.liveServer.resolveRelativePath(href, window.liveServer.currentPage);
                             if (targetPage) {
-                                console.log('Resolved target page:', targetPage);
+                                console.log('Navigating to resolved page:', targetPage);
                                 window.liveServer.navigate(targetPage);
                             } else {
                                 console.log('External or anchor link, allowing default behavior');
@@ -2783,6 +2793,7 @@ addEnhancedLiveReloadScript(htmlContent) {
     
     return htmlContent;
 }
+
 
 getCurrentPageFromUrl() {
     // Extract current page from URL hash or default to index.html
@@ -2835,12 +2846,19 @@ getPageContent(pagePath) {
         `pages/${normalizedPath}`,
         normalizedPath.replace('pages/', ''),
         normalizedPath.replace('../', ''),
+        // Handle cases where path might have extra '../' or './'
+        normalizedPath.replace(/^\.\.\//, '').replace(/^\.\//, ''),
+        // Try with pages prefix if not already there
+        normalizedPath.includes('/') ? normalizedPath : `pages/${normalizedPath}`
     ];
+    
+    console.log('Trying variations:', variations);
     
     for (const variation of variations) {
         if (this.fileSystem.files.has(variation)) {
             const file = this.fileSystem.files.get(variation);
             if (file.type === 'html') {
+                console.log('Found file at:', variation);
                 let content = this.processHTMLContent(file.content, variation);
                 content = this.addEnhancedLiveReloadScript(content);
                 return content;
@@ -2853,53 +2871,66 @@ getPageContent(pagePath) {
 }
 
 
-    processHTMLContent(htmlContent) {
-        // Collect all CSS and JS content
-        let cssContent = '';
-        let jsContent = '';
-        
-        for (const [path, file] of this.fileSystem.files) {
-            if (file.type === 'css') {
-                cssContent += `/* File: ${path} */\n${file.content}\n\n`;
-            } else if (file.type === 'js') {
-                jsContent += `// File: ${path}\n${file.content}\n\n`;
-            }
+
+    processHTMLContent(htmlContent, currentPath = 'index.html') {
+    // Collect all CSS and JS content
+    let cssContent = '';
+    let jsContent = '';
+    
+    for (const [path, file] of this.fileSystem.files) {
+        if (file.type === 'css') {
+            cssContent += `/* File: ${path} */\n${file.content}\n\n`;
+        } else if (file.type === 'js') {
+            jsContent += `// File: ${path}\n${file.content}\n\n`;
         }
-        
-        // Replace CSS links with inline styles
-        if (cssContent) {
-            const styleTag = `<style>\n${cssContent}</style>`;
-            
-            // Try to replace existing link tags first
-            htmlContent = htmlContent.replace(/<link[^>]*rel=['"]*stylesheet['"]*[^>]*>/gi, '');
-            
-            // Insert style tag before closing head or at the beginning
-            if (htmlContent.includes('</head>')) {
-                htmlContent = htmlContent.replace('</head>', `${styleTag}\n</head>`);
-            } else if (htmlContent.includes('<head>')) {
-                htmlContent = htmlContent.replace('<head>', `<head>\n${styleTag}`);
-            } else {
-                htmlContent = `<head>${styleTag}</head>\n${htmlContent}`;
-            }
-        }
-        
-        // Replace JS script tags with inline scripts
-        if (jsContent) {
-            const scriptTag = `<script>\n${jsContent}\n</script>`;
-            
-            // Try to replace existing script tags first
-            htmlContent = htmlContent.replace(/<script[^>]*src=[^>]*><\/script>/gi, '');
-            
-            // Insert script tag before closing body or at the end
-            if (htmlContent.includes('</body>')) {
-                htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
-            } else {
-                htmlContent = htmlContent + `\n${scriptTag}`;
-            }
-        }
-        
-        return htmlContent;
     }
+    
+    // Don't modify relative paths in HTML - let the navigation script handle it
+    // This prevents breaking the original href attributes
+    
+    // Replace CSS links with inline styles
+    if (cssContent) {
+        const styleTag = `<style>\n${cssContent}</style>`;
+        
+        // Try to replace existing link tags first
+        htmlContent = htmlContent.replace(/<link[^>]*rel=['"]*stylesheet['"]*[^>]*>/gi, '');
+        
+        // Insert style tag before closing head or at the beginning
+        if (htmlContent.includes('</head>')) {
+            htmlContent = htmlContent.replace('</head>', `${styleTag}\n</head>`);
+        } else if (htmlContent.includes('<head>')) {
+            htmlContent = htmlContent.replace('<head>', `<head>\n${styleTag}`);
+        } else {
+            htmlContent = `<head>${styleTag}</head>\n${htmlContent}`;
+        }
+    }
+    
+    // Replace JS script tags with inline scripts
+    if (jsContent) {
+        const scriptTag = `<script>\n${jsContent}\n</script>`;
+        
+        // Try to replace existing script tags first
+        htmlContent = htmlContent.replace(/<script[^>]*src=[^>]*><\/script>/gi, '');
+        
+        // Insert script tag before closing body or at the end
+        if (htmlContent.includes('</body>')) {
+            htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
+        } else {
+            htmlContent = htmlContent + `\n${scriptTag}`;
+        }
+    }
+    
+    return htmlContent;
+}
+
+getCurrentPageFromUrl() {
+    // Extract current page from URL hash or default to index.html
+    const hash = window.location.hash.substring(1);
+    const currentPage = hash || 'index.html';
+    console.log('Current page from URL:', currentPage);
+    return currentPage;
+}
+
 
     addLiveReloadScript(htmlContent) {
         const liveReloadScript = `
