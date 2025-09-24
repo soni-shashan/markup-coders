@@ -131,7 +131,7 @@ class VSCodeEditor {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fileName.replace('.html', '')}</title>
+    <title>${'index.html'.replace('.html', '')}</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -152,7 +152,7 @@ class VSCodeEditor {
     <main>
         <section class="page-header">
             <div class="container">
-                <h2 data-animate="fade-in">Welcome to ${fileName.replace('.html', '')}</h2>
+                <h2 data-animate="fade-in">Welcome to ${'index.html'.replace('.html', '')}</h2>
                 <p data-animate="fade-in">Start building your amazing content here!</p>
             </div>
         </section>
