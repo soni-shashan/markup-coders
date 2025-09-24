@@ -1051,3 +1051,170 @@ body.light-theme .login-prompt {
 body.monokai-theme .login-prompt {
     background: linear-gradient(135deg, #fd746c 0%, #ff9068 100%);
 }
+/* Context Menu Styles */
+.context-menu {
+    position: fixed;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 0;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    min-width: 180px;
+    font-size: 13px;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-primary);
+    transition: background 0.2s ease;
+}
+
+.context-menu-item:hover {
+    background: var(--hover-bg);
+}
+
+.context-menu-item i {
+    width: 16px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Enhanced File Tree Styles */
+.file-item, .folder-item {
+    position: relative;
+    user-select: none;
+}
+
+.file-item:hover .file-actions,
+.folder-item:hover .file-actions {
+    display: flex;
+}
+
+.file-actions {
+    display: none;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.file-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+
+.file-action-btn:hover {
+    color: var(--text-primary);
+    background: var(--hover-bg);
+}
+
+/* Folder specific styles */
+.folder-item .file-actions .file-action-btn:first-child {
+    color: var(--accent-blue);
+}
+
+.folder-item .file-actions .file-action-btn:first-child:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* Enhanced Modal Styles */
+.modal-header h3 {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.file-templates {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.template-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.template-btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent-blue);
+}
+
+.template-btn:active {
+    transform: translateY(1px);
+}
+
+/* Live Server Error Styles */
+.live-server-error {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ff6b6b;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    z-index: 10000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-family: Arial, sans-serif;
+    max-width: 350px;
+    animation: slideInRight 0.3s ease;
+}
+
+.live-server-error button {
+    margin-left: 10px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.live-server-error button:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Enhanced folder contents indentation */
+.folder-contents {
+    padding-left: 20px;
+    border-left: 1px solid var(--border-color);
+    margin-left: 8px;
+    position: relative;
+}
+
+.folder-contents::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border-color);
+    opacity: 0.3;
+}
+
+/* Nested folder support */
+.folder-contents .folder-contents {
+    padding-left: 16px;
+}
+
+.folder-contents .folder-contents .folder-contents {
+    padding-left: 12px;
+}

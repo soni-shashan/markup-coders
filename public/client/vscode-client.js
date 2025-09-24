@@ -12,9 +12,11 @@ class VSCodeEditor {
         this.autoSaveInterval = null;
         this.editorHistory = new Map();
         this.liveServerBaseUrl = null;
+        this.selectedFolder = null; // ADD THIS LINE
         
         this.init();
     }
+
 
     async init() {
         try {
@@ -1657,8 +1659,16 @@ console.log('📝 Script.js loaded successfully!');`,
 
         // Render folders
         for (const [folderName, files] of filesByFolder) {
-            if (folderName !== 'root' && files.length > 0) {
+            if (folderName !== 'root') {
                 const folderElement = this.createFolderElement(folderName, files);
+                fileTree.appendChild(folderElement);
+            }
+        }
+
+        // Add empty folders
+        for (const folderName of this.fileSystem.folders) {
+            if (!filesByFolder.has(folderName)) {
+                const folderElement = this.createFolderElement(folderName, []);
                 fileTree.appendChild(folderElement);
             }
         }
@@ -1666,9 +1676,12 @@ console.log('📝 Script.js loaded successfully!');`,
         console.log('File tree rendered');
     }
 
+
     createFileElement(path, file) {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
+        fileItem.dataset.path = path;
+        
         if (this.activeTab === path) {
             fileItem.classList.add('active');
         }
@@ -1695,18 +1708,159 @@ console.log('📝 Script.js loaded successfully!');`,
             }
         });
 
+        // Right-click context menu for files
+        fileItem.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showFileContextMenu(e, path, false);
+        });
+
         return fileItem;
     }
+
+    showFileContextMenu(e, path, isFolder) {
+    // Remove existing context menu
+    const existingMenu = document.querySelector('.context-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'context-menu';
+    contextMenu.style.cssText = `
+        position: fixed;
+        top: ${e.clientY}px;
+        left: ${e.clientX}px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 0;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        min-width: 180px;
+    `;
+
+    let menuItems = [];
+
+    if (isFolder) {
+        menuItems = [
+            { icon: 'fas fa-file-plus', text: 'New File', action: () => this.showNewFileModal(path) },
+            { icon: 'fas fa-folder-plus', text: 'New Folder', action: () => this.showNewFolderModal(path) },
+            { separator: true },
+            { icon: 'fas fa-trash', text: 'Delete Folder', action: () => this.deleteFolder(path) }
+        ];
+    } else {
+        menuItems = [
+            { icon: 'fas fa-external-link-alt', text: 'Open', action: () => this.openFile(path) },
+            { icon: 'fas fa-edit', text: 'Rename', action: () => this.renameFile(path) },
+            { separator: true },
+            { icon: 'fas fa-trash', text: 'Delete', action: () => this.deleteFile(path) }
+        ];
+    }
+
+    menuItems.forEach(item => {
+        if (item.separator) {
+            const separator = document.createElement('div');
+            separator.style.cssText = 'height: 1px; background: var(--border-color); margin: 4px 0;';
+            contextMenu.appendChild(separator);
+        } else {
+            const menuItem = document.createElement('div');
+            menuItem.className = 'context-menu-item';
+            menuItem.style.cssText = `
+                padding: 8px 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: var(--text-primary);
+                font-size: 13px;
+                transition: background 0.2s ease;
+            `;
+            
+            menuItem.innerHTML = `<i class="${item.icon}"></i> ${item.text}`;
+            
+            menuItem.addEventListener('mouseenter', () => {
+                menuItem.style.background = 'var(--hover-bg)';
+            });
+            
+            menuItem.addEventListener('mouseleave', () => {
+                menuItem.style.background = 'transparent';
+            });
+            
+            menuItem.addEventListener('click', () => {
+                item.action();
+                contextMenu.remove();
+            });
+            
+            contextMenu.appendChild(menuItem);
+        }
+    });
+
+    document.body.appendChild(contextMenu);
+
+    // Close context menu when clicking outside
+    const closeMenu = (e) => {
+        if (!contextMenu.contains(e.target)) {
+            contextMenu.remove();
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', closeMenu);
+    }, 100);
+}
+
+showNewFileModal(folderPath = null) {
+    this.selectedFolder = folderPath;
+    const modal = document.getElementById('newFileModal');
+    const input = document.getElementById('newFileName');
+    
+    // Update modal title to show target folder
+    const modalTitle = modal.querySelector('.modal-header h3');
+    if (folderPath) {
+        modalTitle.textContent = `Create New File in "${folderPath}"`;
+    } else {
+        modalTitle.textContent = 'Create New File';
+    }
+    
+    modal.style.display = 'flex';
+    input.focus();
+    input.value = ''; // Clear previous value
+}
+
+showNewFolderModal(parentFolder = null) {
+    this.selectedFolder = parentFolder;
+    const modal = document.getElementById('newFolderModal');
+    const input = document.getElementById('newFolderName');
+    
+    // Update modal title to show parent folder
+    const modalTitle = modal.querySelector('.modal-header h3');
+    if (parentFolder) {
+        modalTitle.textContent = `Create New Folder in "${parentFolder}"`;
+    } else {
+        modalTitle.textContent = 'Create New Folder';
+    }
+    
+    modal.style.display = 'flex';
+    input.focus();
+    input.value = ''; // Clear previous value
+}
+
 
     createFolderElement(folderName, files) {
         const folderContainer = document.createElement('div');
         
         const folderItem = document.createElement('div');
         folderItem.className = 'folder-item expanded';
+        folderItem.dataset.folder = folderName;
+        
         folderItem.innerHTML = `
             <i class="fas fa-folder-open"></i>
             <span>${folderName}</span>
             <div class="file-actions">
+                <button class="file-action-btn" title="New File in Folder" onclick="editor.showNewFileModal('${folderName}')">
+                    <i class="fas fa-file-plus"></i>
+                </button>
                 <button class="file-action-btn" title="Delete Folder" onclick="editor.deleteFolder('${folderName}')">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -1737,11 +1891,18 @@ console.log('📝 Script.js loaded successfully!');`,
             }
         });
 
+        // Right-click context menu for folders
+        folderItem.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showFileContextMenu(e, folderName, true);
+        });
+
         folderContainer.appendChild(folderItem);
         folderContainer.appendChild(folderContents);
 
         return folderContainer;
     }
+
 
     getFileIcon(type) {
         const icons = {
@@ -2194,62 +2355,493 @@ console.log('📝 Script.js loaded successfully!');`,
     }
 
     generateLiveServerHTML() {
-        // Get the main HTML file (index.html or first HTML file)
-        let mainHtmlPath = 'index.html';
-        if (!this.fileSystem.files.has(mainHtmlPath)) {
-            // Find first HTML file
-            for (const [path, file] of this.fileSystem.files) {
-                if (file.type === 'html') {
-                    mainHtmlPath = path;
-                    break;
-                }
+    // Get the main HTML file (index.html or first HTML file)
+    let mainHtmlPath = 'index.html';
+    if (!this.fileSystem.files.has(mainHtmlPath)) {
+        // Find first HTML file
+        for (const [path, file] of this.fileSystem.files) {
+            if (file.type === 'html') {
+                mainHtmlPath = path;
+                break;
             }
         }
+    }
+    
+    if (!this.fileSystem.files.has(mainHtmlPath)) {
+        return this.getNoHtmlFileContent();
+    }
+    
+    let htmlContent = this.fileSystem.files.get(mainHtmlPath).content;
+    
+    // Process and inject CSS and JS
+    htmlContent = this.processHTMLContent(htmlContent, mainHtmlPath);
+    
+    // Add enhanced live reload functionality
+    htmlContent = this.addEnhancedLiveReloadScript(htmlContent);
+    
+    return htmlContent;
+}
+
+getNoHtmlFileContent() {
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Live Server - No HTML File</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                .message {
+                    text-align: center;
+                    padding: 3rem;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                .message h1 {
+                    margin-bottom: 1rem;
+                    font-size: 2.5rem;
+                }
+                .message p {
+                    font-size: 1.2rem;
+                    opacity: 0.9;
+                }
+                .create-btn {
+                    background: rgba(255, 255, 255, 0.2);
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    margin-top: 1rem;
+                    transition: all 0.3s ease;
+                }
+                .create-btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: translateY(-2px);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="message">
+                <h1>📄 No HTML File Found</h1>
+                <p>Create an HTML file to see the live preview.</p>
+                <button class="create-btn" onclick="if(window.opener && window.opener.editor) { window.opener.editor.createNewFile('index.html'); window.opener.focus(); }">
+                    Create index.html
+                </button>
+            </div>
+        </body>
+        </html>
+    `;
+}
+
+processHTMLContent(htmlContent, currentPath = 'index.html') {
+    // Collect all CSS and JS content
+    let cssContent = '';
+    let jsContent = '';
+    
+    for (const [path, file] of this.fileSystem.files) {
+        if (file.type === 'css') {
+            cssContent += `/* File: ${path} */\n${file.content}\n\n`;
+        } else if (file.type === 'js') {
+            jsContent += `// File: ${path}\n${file.content}\n\n`;
+        }
+    }
+    
+    // Fix relative paths based on current page location
+    htmlContent = this.fixRelativePaths(htmlContent, currentPath);
+    
+    // Replace CSS links with inline styles
+    if (cssContent) {
+        const styleTag = `<style>\n${cssContent}</style>`;
         
-        if (!this.fileSystem.files.has(mainHtmlPath)) {
-            return `
-                <html>
-                    <head>
-                        <title>Live Server - No HTML File</title>
-                        <style>
-                            body {
-                                font-family: Arial, sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                height: 100vh;
-                                margin: 0;
-                                background: #f0f0f0;
-                            }
-                            .message {
-                                text-align: center;
-                                padding: 2rem;
-                                background: white;
-                                border-radius: 10px;
-                                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="message">
-                            <h1>No HTML File Found</h1>
-                            <p>Create an HTML file to see the live preview.</p>
-                        </div>
-                    </body>
-                </html>
-            `;
+        // Try to replace existing link tags first
+        htmlContent = htmlContent.replace(/<link[^>]*rel=['"]*stylesheet['"]*[^>]*>/gi, '');
+        
+        // Insert style tag before closing head or at the beginning
+        if (htmlContent.includes('</head>')) {
+            htmlContent = htmlContent.replace('</head>', `${styleTag}\n</head>`);
+        } else if (htmlContent.includes('<head>')) {
+            htmlContent = htmlContent.replace('<head>', `<head>\n${styleTag}`);
+        } else {
+            htmlContent = `<head>${styleTag}</head>\n${htmlContent}`;
+        }
+    }
+    
+    // Replace JS script tags with inline scripts
+    if (jsContent) {
+        const scriptTag = `<script>\n${jsContent}\n</script>`;
+        
+        // Try to replace existing script tags first
+        htmlContent = htmlContent.replace(/<script[^>]*src=[^>]*><\/script>/gi, '');
+        
+        // Insert script tag before closing body or at the end
+        if (htmlContent.includes('</body>')) {
+            htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
+        } else {
+            htmlContent = htmlContent + `\n${scriptTag}`;
+        }
+    }
+    
+    return htmlContent;
+}
+
+fixRelativePaths(htmlContent, currentPath) {
+    // This function fixes relative paths in HTML content based on the current page location
+    const currentDir = currentPath.includes('/') ? currentPath.substring(0, currentPath.lastIndexOf('/')) : '';
+    
+    // Fix image src paths
+    htmlContent = htmlContent.replace(/src=["']([^"']+)["']/gi, (match, src) => {
+        if (src.startsWith('http') || src.startsWith('//') || src.startsWith('#')) {
+            return match; // Don't modify absolute URLs or anchors
         }
         
-        let htmlContent = this.fileSystem.files.get(mainHtmlPath).content;
+        // Handle relative paths
+        if (currentDir && src.startsWith('../')) {
+            // Remove one level of '../' for each directory level
+            const levels = currentDir.split('/').length;
+            let newSrc = src;
+            for (let i = 0; i < levels; i++) {
+                newSrc = newSrc.replace('../', '');
+            }
+            return `src="${newSrc}"`;
+        }
         
-        // Process and inject CSS and JS
-        htmlContent = this.processHTMLContent(htmlContent);
-        
-        // Add live reload functionality
-        htmlContent = this.addLiveReloadScript(htmlContent);
-        
-        return htmlContent;
+        return match;
+    });
+    
+    return htmlContent;
+}
+
+addEnhancedLiveReloadScript(htmlContent) {
+    const liveReloadScript = `
+        <script>
+            // Enhanced Live Server with Better Navigation
+            window.liveServer = {
+                currentPage: '${this.getCurrentPageFromUrl()}',
+                lastModified: ${Date.now()},
+                fileMap: ${JSON.stringify(this.getFileMap())},
+                
+                navigate: function(targetPage) {
+                    console.log('Navigating to:', targetPage);
+                    
+                    if (window.opener && window.opener.editor) {
+                        const content = window.opener.editor.getPageContent(targetPage);
+                        if (content) {
+                            // Store scroll position
+                            const scrollPos = { x: window.scrollX, y: window.scrollY };
+                            
+                            // Update content
+                            document.open();
+                            document.write(content);
+                            document.close();
+                            
+                            // Update current page and URL
+                            this.currentPage = targetPage;
+                            this.updateURL(targetPage);
+                            
+                            // Restore scroll position for same page
+                            if (scrollPos.x !== 0 || scrollPos.y !== 0) {
+                                setTimeout(() => {
+                                    window.scrollTo(scrollPos.x, scrollPos.y);
+                                }, 100);
+                            }
+                            
+                            console.log('Navigation completed to:', targetPage);
+                            return true;
+                        } else {
+                            console.warn('Content not found for:', targetPage);
+                            this.showNavigationError(targetPage);
+                            return false;
+                        }
+                    }
+                    return false;
+                },
+                
+                updateURL: function(page) {
+                    try {
+                        const newUrl = window.location.origin + window.location.pathname + '#' + page;
+                        history.pushState({page: page}, '', newUrl);
+                    } catch(e) {
+                        console.warn('Could not update URL:', e);
+                    }
+                },
+                
+                showNavigationError: function(page) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.cssText = \`
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #ff6b6b;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        z-index: 10000;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                        font-family: Arial, sans-serif;
+                    \`;
+                    errorDiv.innerHTML = \`
+                        <strong>Page Not Found</strong><br>
+                        Could not find: \${page}
+                        <button onclick="this.parentElement.remove()" style="margin-left: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
+                    \`;
+                    document.body.appendChild(errorDiv);
+                    
+                    setTimeout(() => {
+                        if (errorDiv.parentElement) {
+                            errorDiv.remove();
+                        }
+                    }, 5000);
+                },
+                
+                checkForUpdates: function() {
+                    if (window.opener && !window.opener.closed && window.opener.editor) {
+                        try {
+                            const editor = window.opener.editor;
+                            const newModified = editor.getLastModified();
+                            if (newModified > this.lastModified) {
+                                this.lastModified = newModified;
+                                this.reload();
+                            }
+                        } catch (e) {
+                            // Ignore cross-origin errors
+                        }
+                    } else if (window.opener && window.opener.closed) {
+                        // Parent window closed, show message
+                        this.showParentClosedMessage();
+                    }
+                },
+                
+                showParentClosedMessage: function() {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.style.cssText = \`
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        background: #ff9800;
+                        color: white;
+                        padding: 10px;
+                        text-align: center;
+                        z-index: 10000;
+                        font-family: Arial, sans-serif;
+                    \`;
+                    messageDiv.innerHTML = 'Live server connection lost - Editor window was closed';
+                    document.body.appendChild(messageDiv);
+                },
+                
+                reload: function() {
+                    if (window.opener && window.opener.editor) {
+                        const content = window.opener.editor.getPageContent(this.currentPage);
+                        if (content) {
+                            const scrollPos = { x: window.scrollX, y: window.scrollY };
+                            document.open();
+                            document.write(content);
+                            document.close();
+                            
+                            // Restore scroll position
+                            setTimeout(() => {
+                                window.scrollTo(scrollPos.x, scrollPos.y);
+                            }, 50);
+                        }
+                    }
+                },
+                
+                resolveRelativePath: function(href, currentPage) {
+                    // Handle different types of links
+                    if (href.startsWith('http') || href.startsWith('//')) {
+                        return null; // External link
+                    }
+                    
+                    if (href.startsWith('#')) {
+                        return null; // Anchor link
+                    }
+                    
+                    if (href.startsWith('/')) {
+                        return href.substring(1); // Absolute path
+                    }
+                    
+                    // Handle relative paths
+                    const currentDir = currentPage.includes('/') ? currentPage.substring(0, currentPage.lastIndexOf('/')) : '';
+                    let resolvedPath = href;
+                    
+                    // Handle ../
+                    if (href.startsWith('../')) {
+                        const parts = currentDir.split('/').filter(p => p);
+                        let upLevels = 0;
+                        let tempHref = href;
+                        
+                        while (tempHref.startsWith('../')) {
+                            upLevels++;
+                            tempHref = tempHref.substring(3);
+                        }
+                        
+                        const newParts = parts.slice(0, -upLevels);
+                        resolvedPath = newParts.length > 0 ? newParts.join('/') + '/' + tempHref : tempHref;
+                    } else if (currentDir) {
+                        // Handle ./
+                        if (href.startsWith('./')) {
+                            resolvedPath = currentDir + '/' + href.substring(2);
+                        } else {
+                            resolvedPath = currentDir + '/' + href;
+                        }
+                    }
+                    
+                    return resolvedPath;
+                }
+            };
+            
+            // Set up auto-refresh
+            setInterval(function() {
+                window.liveServer.checkForUpdates();
+            }, 1000);
+            
+            // Handle navigation when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('Live server initialized for:', window.liveServer.currentPage);
+                
+                // Override all link clicks
+                document.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (link && link.href) {
+                        const href = link.getAttribute('href');
+                        console.log('Link clicked:', href);
+                        
+                        if (href && (href.endsWith('.html') || href.includes('.html'))) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetPage = window.liveServer.resolveRelativePath(href, window.liveServer.currentPage);
+                            if (targetPage) {
+                                console.log('Resolved target page:', targetPage);
+                                window.liveServer.navigate(targetPage);
+                            } else {
+                                console.log('External or anchor link, allowing default behavior');
+                            }
+                            return false;
+                        }
+                    }
+                }, true);
+                
+                // Handle browser back/forward
+                window.addEventListener('popstate', function(e) {
+                    if (e.state && e.state.page) {
+                        window.liveServer.navigate(e.state.page);
+                    }
+                });
+                
+                // Handle page refresh
+                window.addEventListener('beforeunload', function() {
+                    // Store current page in sessionStorage
+                    try {
+                        sessionStorage.setItem('liveServerCurrentPage', window.liveServer.currentPage);
+                    } catch(e) {
+                        // Ignore storage errors
+                    }
+                });
+                
+                // Restore page on load
+                try {
+                    const storedPage = sessionStorage.getItem('liveServerCurrentPage');
+                    if (storedPage && storedPage !== window.liveServer.currentPage) {
+                        window.liveServer.navigate(storedPage);
+                    }
+                } catch(e) {
+                    // Ignore storage errors
+                }
+            });
+        </script>
+    `;
+    
+    if (htmlContent.includes('</body>')) {
+        htmlContent = htmlContent.replace('</body>', `${liveReloadScript}\n</body>`);
+    } else {
+        htmlContent = htmlContent + liveReloadScript;
     }
+    
+    return htmlContent;
+}
+
+getCurrentPageFromUrl() {
+    // Extract current page from URL hash or default to index.html
+    const hash = window.location.hash.substring(1);
+    return hash || 'index.html';
+}
+
+getFileMap() {
+    // Create a map of available HTML files for navigation
+    const fileMap = {};
+    for (const [path, file] of this.fileSystem.files) {
+        if (file.type === 'html') {
+            fileMap[path] = {
+                type: 'html',
+                lastModified: file.lastModified.getTime()
+            };
+        }
+    }
+    return fileMap;
+}
+
+getPageContent(pagePath) {
+    // Normalize the path
+    let normalizedPath = pagePath;
+    
+    // Remove leading slash if present
+    if (normalizedPath.startsWith('/')) {
+        normalizedPath = normalizedPath.substring(1);
+    }
+    
+    // Add .html extension if missing
+    if (!normalizedPath.endsWith('.html') && !normalizedPath.includes('.')) {
+        normalizedPath += '.html';
+    }
+    
+    console.log('Getting page content for:', normalizedPath);
+    
+    if (this.fileSystem.files.has(normalizedPath)) {
+        const file = this.fileSystem.files.get(normalizedPath);
+        if (file.type === 'html') {
+            let content = this.processHTMLContent(file.content, normalizedPath);
+            content = this.addEnhancedLiveReloadScript(content);
+            return content;
+        }
+    }
+    
+    // Try to find the file with different path variations
+    const variations = [
+        normalizedPath,
+        `pages/${normalizedPath}`,
+        normalizedPath.replace('pages/', ''),
+        normalizedPath.replace('../', ''),
+    ];
+    
+    for (const variation of variations) {
+        if (this.fileSystem.files.has(variation)) {
+            const file = this.fileSystem.files.get(variation);
+            if (file.type === 'html') {
+                let content = this.processHTMLContent(file.content, variation);
+                content = this.addEnhancedLiveReloadScript(content);
+                return content;
+            }
+        }
+    }
+    
+    console.warn('Page not found:', pagePath, 'Variations tried:', variations);
+    return null;
+}
+
 
     processHTMLContent(htmlContent) {
         // Collect all CSS and JS content
@@ -2460,126 +3052,186 @@ console.log('📝 Script.js loaded successfully!');`,
     }
 
     setupModalEventListeners() {
-        // New File Modal
-        const newFileModal = document.getElementById('newFileModal');
-        const newFileNameInput = document.getElementById('newFileName');
-        
-        newFileModal.querySelector('.close-modal').addEventListener('click', () => {
+    // New File Modal
+    const newFileModal = document.getElementById('newFileModal');
+    const newFileNameInput = document.getElementById('newFileName');
+    
+    newFileModal.querySelector('.close-modal').addEventListener('click', () => {
+        newFileModal.style.display = 'none';
+        this.selectedFolder = null;
+    });
+    
+    newFileModal.querySelector('.btn-cancel').addEventListener('click', () => {
+        newFileModal.style.display = 'none';
+        this.selectedFolder = null;
+    });
+    
+    newFileModal.querySelector('.btn-create').addEventListener('click', () => {
+        const fileName = newFileNameInput.value.trim();
+        if (fileName) {
+            this.createNewFile(fileName);
             newFileModal.style.display = 'none';
-        });
-        
-        newFileModal.querySelector('.btn-cancel').addEventListener('click', () => {
-            newFileModal.style.display = 'none';
-        });
-        
-        newFileModal.querySelector('.btn-create').addEventListener('click', () => {
-            const fileName = newFileNameInput.value.trim();
-            if (fileName) {
-                this.createNewFile(fileName);
-                newFileModal.style.display = 'none';
-                newFileNameInput.value = '';
-            }
-        });
-        
-        // Template buttons
-        document.querySelectorAll('.template-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const template = btn.dataset.template;
-                const extension = template === 'html' ? '.html' : template === 'css' ? '.css' : '.js';
-                const baseName = template === 'html' ? 'page' : template === 'css' ? 'styles' : 'script';
-                newFileNameInput.value = this.getUniqueFileName(baseName + extension);
-            });
-        });
-        
-        // New Folder Modal
-        const newFolderModal = document.getElementById('newFolderModal');
-        const newFolderNameInput = document.getElementById('newFolderName');
-        
-        newFolderModal.querySelector('.close-modal').addEventListener('click', () => {
-            newFolderModal.style.display = 'none';
-        });
-        
-        newFolderModal.querySelector('.btn-cancel').addEventListener('click', () => {
-            newFolderModal.style.display = 'none';
-        });
-        
-        newFolderModal.querySelector('.btn-create').addEventListener('click', () => {
-            const folderName = newFolderNameInput.value.trim();
-            if (folderName) {
-                this.createNewFolder(folderName);
-                newFolderModal.style.display = 'none';
-                newFolderNameInput.value = '';
-            }
-        });
-        
-        // Shortcuts Modal
-        const shortcutsModal = document.getElementById('shortcutsModal');
-        shortcutsModal.querySelector('.close-modal').addEventListener('click', () => {
-            shortcutsModal.style.display = 'none';
-        });
-        
-        // Enter key support
-        newFileNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                newFileModal.querySelector('.btn-create').click();
-            }
-        });
-        
-        newFolderNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                newFolderModal.querySelector('.btn-create').click();
-            }
-        });
-
-        // Close modals when clicking outside
-        [newFileModal, newFolderModal, shortcutsModal].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
+            newFileNameInput.value = '';
+        }
+    });
+    
+    // Template buttons - update filename based on selected folder
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const template = btn.dataset.template;
+            const extension = template === 'html' ? '.html' : template === 'css' ? '.css' : '.js';
+            const baseName = template === 'html' ? 'page' : template === 'css' ? 'styles' : 'script';
+            let fileName = baseName + extension;
+            
+            // Suggest appropriate filename based on folder
+            if (this.selectedFolder) {
+                if (this.selectedFolder === 'css' && template === 'css') {
+                    fileName = 'styles.css';
+                } else if (this.selectedFolder === 'js' && template === 'js') {
+                    fileName = 'script.js';
+                } else if (this.selectedFolder === 'pages' && template === 'html') {
+                    fileName = 'page.html';
                 }
-            });
+            }
+            
+            newFileNameInput.value = this.getUniqueFileName(this.selectedFolder ? `${this.selectedFolder}/${fileName}` : fileName).split('/').pop();
         });
-    }
+    });
+    
+    // New Folder Modal
+    const newFolderModal = document.getElementById('newFolderModal');
+    const newFolderNameInput = document.getElementById('newFolderName');
+    
+    newFolderModal.querySelector('.close-modal').addEventListener('click', () => {
+        newFolderModal.style.display = 'none';
+        this.selectedFolder = null;
+    });
+    
+    newFolderModal.querySelector('.btn-cancel').addEventListener('click', () => {
+        newFolderModal.style.display = 'none';
+        this.selectedFolder = null;
+    });
+    
+    newFolderModal.querySelector('.btn-create').addEventListener('click', () => {
+        const folderName = newFolderNameInput.value.trim();
+        if (folderName) {
+            this.createNewFolder(folderName);
+            newFolderModal.style.display = 'none';
+            newFolderNameInput.value = '';
+        }
+    });
+    
+    // Shortcuts Modal
+    const shortcutsModal = document.getElementById('shortcutsModal');
+    shortcutsModal.querySelector('.close-modal').addEventListener('click', () => {
+        shortcutsModal.style.display = 'none';
+    });
+    
+    // Enter key support
+    newFileNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            newFileModal.querySelector('.btn-create').click();
+        }
+    });
+    
+    newFolderNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            newFolderModal.querySelector('.btn-create').click();
+        }
+    });
+
+    // Close modals when clicking outside
+    [newFileModal, newFolderModal, shortcutsModal].forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                this.selectedFolder = null;
+            }
+        });
+    });
+}
+
 
     createNewFile(fileName) {
-        // Ensure unique filename
-        const uniqueFileName = this.getUniqueFileName(fileName);
-        
-        // Determine file type
-        const extension = uniqueFileName.split('.').pop().toLowerCase();
-        const fileType = this.getFileType(extension);
-        
-        // Get template content
-        let content = this.getTemplateContent(fileType, uniqueFileName);
-        
-        // Create file
-        this.fileSystem.files.set(uniqueFileName, {
-            content: content,
-            type: fileType,
-            modified: false,
-            created: new Date(),
-            lastModified: new Date()
-        });
-        
-        this.renderFileTree();
-        this.openFile(uniqueFileName);
-        this.showAlert(`File "${uniqueFileName}" created successfully!`, 'success');
-        
-        console.log('New file created:', uniqueFileName);
+    if (!fileName.trim()) {
+        this.showAlert('Please enter a file name', 'error');
+        return;
     }
 
-    createNewFolder(folderName) {
-        if (this.fileSystem.folders.has(folderName)) {
-            this.showAlert(`Folder "${folderName}" already exists!`, 'error');
-            return;
-        }
-        
-        this.fileSystem.folders.add(folderName);
-        this.renderFileTree();
-        this.showAlert(`Folder "${folderName}" created successfully!`, 'success');
-        
-        console.log('New folder created:', folderName);
+    // Determine the full path based on selected folder
+    let fullPath = fileName;
+    if (this.selectedFolder) {
+        fullPath = `${this.selectedFolder}/${fileName}`;
     }
+
+    // Ensure unique filename
+    const uniqueFileName = this.getUniqueFileName(fullPath);
+    
+    // Determine file type
+    const extension = uniqueFileName.split('.').pop().toLowerCase();
+    const fileType = this.getFileType(extension);
+    
+    // Get template content
+    let content = this.getTemplateContent(fileType, uniqueFileName);
+    
+    // Create file
+    this.fileSystem.files.set(uniqueFileName, {
+        content: content,
+        type: fileType,
+        modified: false,
+        created: new Date(),
+        lastModified: new Date()
+    });
+    
+    // If creating in a folder, ensure the folder exists
+    if (this.selectedFolder) {
+        this.fileSystem.folders.add(this.selectedFolder);
+    }
+    
+    this.renderFileTree();
+    this.openFile(uniqueFileName);
+    this.showAlert(`File "${uniqueFileName}" created successfully!`, 'success');
+    
+    // Reset selected folder
+    this.selectedFolder = null;
+    
+    console.log('New file created:', uniqueFileName);
+}
+
+
+    createNewFolder(folderName) {
+    if (!folderName.trim()) {
+        this.showAlert('Please enter a folder name', 'error');
+        return;
+    }
+
+    // Determine the full path based on selected parent folder
+    let fullPath = folderName;
+    if (this.selectedFolder) {
+        fullPath = `${this.selectedFolder}/${folderName}`;
+    }
+
+    if (this.fileSystem.folders.has(fullPath)) {
+        this.showAlert(`Folder "${fullPath}" already exists!`, 'error');
+        return;
+    }
+    
+    this.fileSystem.folders.add(fullPath);
+    
+    // Ensure parent folder exists too
+    if (this.selectedFolder) {
+        this.fileSystem.folders.add(this.selectedFolder);
+    }
+    
+    this.renderFileTree();
+    this.showAlert(`Folder "${fullPath}" created successfully!`, 'success');
+    
+    // Reset selected folder
+    this.selectedFolder = null;
+    
+    console.log('New folder created:', fullPath);
+}
+
 
     getUniqueFileName(fileName) {
         if (!this.fileSystem.files.has(fileName)) {
