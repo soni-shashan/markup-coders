@@ -1218,10 +1218,10 @@ app.get('/api/client/team-info', requireAuth, async (req, res) => {
     }
 });
 
-// Auto-save temp code
+// Enhanced temp-save to handle project structure
 app.post('/api/client/temp-save', requireAuth, async (req, res) => {
     try {
-        const { htmlCode, cssCode, jsCode } = req.body;
+        const { htmlCode, cssCode, jsCode, projectStructure } = req.body;
         
         await TempCode.findOneAndUpdate(
             { teamName: req.user.teamName, email: req.user.email },
@@ -1232,6 +1232,7 @@ app.post('/api/client/temp-save', requireAuth, async (req, res) => {
                 htmlCode: htmlCode || '',
                 cssCode: cssCode || '',
                 jsCode: jsCode || '',
+                projectStructure: projectStructure || null,
                 lastSaved: new Date(),
                 isActive: true
             },
@@ -1241,12 +1242,65 @@ app.post('/api/client/temp-save', requireAuth, async (req, res) => {
             }
         );
         
-        res.json({ success: true, message: 'Code auto-saved' });
+        res.json({ success: true, message: 'Project auto-saved' });
     } catch (error) {
         console.error('Temp save error:', error);
         res.status(400).json({ success: false, message: error.message });
     }
 });
+
+// Enhanced submit to handle project structure
+app.post('/api/client/submit', requireAuth, async (req, res) => {
+    try {
+        const { htmlCode, cssCode, jsCode, projectStructure } = req.body;
+        
+        const existingSubmissions = await Submission.find({ 
+            teamName: req.user.teamName 
+        }).sort({ submittedAt: -1 });
+        
+        const submissionNumber = existingSubmissions.length + 1;
+        
+        const baseSubmissionId = `${req.user.teamName}@${req.user.studentId}:${req.user.email}`;
+        
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const uniqueSubmissionId = `${baseSubmissionId}_${submissionNumber}_${timestamp}`;
+        
+        const submission = new Submission({
+            teamName: req.user.teamName,
+            studentId: req.user.studentId,
+            email: req.user.email,
+            htmlCode,
+            cssCode,
+            jsCode,
+            projectStructure: projectStructure || null,
+            submissionId: baseSubmissionId,
+            submissionNumber: submissionNumber,
+            uniqueSubmissionId: uniqueSubmissionId
+        });
+        
+        await submission.save();
+        
+        // Clear temp code after successful submission
+        await TempCode.findOneAndUpdate(
+            { teamName: req.user.teamName, email: req.user.email },
+            { isActive: false }
+        );
+        
+        console.log(`Project submission #${submissionNumber} saved for team: ${req.user.teamName}`);
+        
+        res.json({ 
+            success: true, 
+            message: `Project submission #${submissionNumber} saved successfully!`, 
+            submissionId: baseSubmissionId,
+            submissionNumber: submissionNumber,
+            uniqueId: uniqueSubmissionId
+        });
+    } catch (error) {
+        console.error('Submission error:', error);
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
 
 // Get temp code and latest submission for comparison
 app.get('/api/client/restore-data', requireAuth, async (req, res) => {
