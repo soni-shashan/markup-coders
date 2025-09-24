@@ -151,26 +151,15 @@ function renderSubmissions(teamName) {
                         </div>
                     </div>
                     
-                    <div class="code-previews">
-                        <div class="code-preview">
-                            <h4>HTML</h4>
-                            <pre>${escapeHtml(submission.htmlCode.substring(0, 200))}${submission.htmlCode.length > 200 ? '...' : ''}</pre>
-                        </div>
-                        <div class="code-preview">
-                            <h4>CSS</h4>
-                            <pre>${escapeHtml(submission.cssCode.substring(0, 200))}${submission.cssCode.length > 200 ? '...' : ''}</pre>
-                        </div>
-                        <div class="code-preview">
-                            <h4>JavaScript</h4>
-                            <pre>${escapeHtml(submission.jsCode.substring(0, 200))}${submission.jsCode.length > 200 ? '...' : ''}</pre>
-                        </div>
-                    </div>
+                                    <div class="project-preview">
+                                        ${renderProjectPreviewHTML(submission)}
+                                    </div>
                     
-                    <div class="submission-actions">
-                        <button class="download-btn" onclick="downloadSubmission('${submission._id}')">
-                            📥 Download ZIP
-                        </button>
-                    </div>
+                                    <div class="submission-actions">
+                                        <button class="download-btn" onclick="downloadSubmission('${submission._id}')">
+                                            📥 Download ZIP
+                                        </button>
+                                    </div>
                 </div>
             `).join('')}
         </div>
@@ -505,4 +494,140 @@ function showAlert(message, type) {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// Render a project's file list into a collapsible tree and preview hooks
+function renderProjectPreviewHTML(submission) {
+    // submission.projectStructure is expected to be a JSON string or an object
+    let project = submission.projectStructure;
+    try {
+        if (typeof project === 'string') project = JSON.parse(project);
+    } catch (e) {
+        console.warn('Invalid projectStructure JSON, falling back to individual files', e);
+        project = null;
+    }
+
+    // If project object available, build a file tree, else show fallback previews
+    if (project && project.files) {
+        const files = Object.keys(project.files);
+        const treeHtml = buildFileTreeHtml(files, project.files, submission._id);
+        return `
+            <div class="project-tree">
+                <h4>Project Files</h4>
+                <div class="tree-container">${treeHtml}</div>
+            </div>
+        `;
+    }
+
+    // fallback: show the small code previews
+    return `
+        <div class="code-previews">
+            <div class="code-preview">
+                <h4>HTML</h4>
+                <pre>${escapeHtml(submission.htmlCode ? submission.htmlCode.substring(0,200) : '')}${submission.htmlCode && submission.htmlCode.length > 200 ? '...' : ''}</pre>
+            </div>
+            <div class="code-preview">
+                <h4>CSS</h4>
+                <pre>${escapeHtml(submission.cssCode ? submission.cssCode.substring(0,200) : '')}${submission.cssCode && submission.cssCode.length > 200 ? '...' : ''}</pre>
+            </div>
+            <div class="code-preview">
+                <h4>JavaScript</h4>
+                <pre>${escapeHtml(submission.jsCode ? submission.jsCode.substring(0,200) : '')}${submission.jsCode && submission.jsCode.length > 200 ? '...' : ''}</pre>
+            </div>
+        </div>
+    `;
+}
+
+// Build a nested file tree HTML from file paths
+function buildFileTreeHtml(paths, filesMap, submissionId) {
+    // Create a nested object
+    const root = {};
+    paths.forEach(p => {
+        const parts = p.split('/');
+        let node = root;
+        parts.forEach((part, idx) => {
+            if (!node[part]) node[part] = { __children: {}, __isFile: idx === parts.length - 1 };
+            node = node[part].__children;
+        });
+    });
+
+    // Render recursively
+    function renderNode(obj, prefix = '') {
+        return Object.keys(obj).map(key => {
+            const child = obj[key];
+            const isFile = child.__isFile;
+            const fullPath = prefix ? (prefix + '/' + key) : key;
+            if (isFile) {
+                return `<div class="tree-file"><button class="file-link" onclick="showSubmissionFile('${submissionId}', '${escapeJs(fullPath)}')">${key}</button></div>`;
+            } else {
+                const inner = renderNode(child.__children, fullPath);
+                return `<div class="tree-folder"><div class="folder-name">${key}</div><div class="folder-children">${inner.join('')}</div></div>`;
+            }
+        }).join('');
+    }
+
+    return renderNode(root);
+}
+
+// Escape string for single-quoted JS context
+function escapeJs(s) {
+    return (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+// Show file contents from a submission by fetching a small endpoint that returns the file
+async function showSubmissionFile(submissionId, filePath) {
+    try {
+        showLoading(true, 'Loading file...');
+        const response = await fetch(`/api/admin/submission/${submissionId}`);
+        if (!response.ok) throw new Error('Failed to load submission data');
+        const data = await response.json();
+
+        const project = data.projectStructure ? (typeof data.projectStructure === 'string' ? JSON.parse(data.projectStructure) : data.projectStructure) : null;
+        let content = '';
+        if (project && project.files && project.files[filePath]) {
+            content = project.files[filePath].content || '';
+        } else if (data.htmlCode && filePath.endsWith('.html')) {
+            content = data.htmlCode;
+        } else if (data.cssCode && filePath.endsWith('.css')) {
+            content = data.cssCode;
+        } else if (data.jsCode && (filePath.endsWith('.js') || filePath.endsWith('.mjs'))) {
+            content = data.jsCode;
+        } else {
+            content = '[File content not available]';
+        }
+
+        showFileModal(filePath, content);
+    } catch (error) {
+        console.error('showSubmissionFile error:', error);
+        showAlert('Cannot load file: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Simple file viewer modal
+function showFileModal(fileName, content) {
+    // Remove existing modal if any
+    const existing = document.getElementById('fileViewModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'fileViewModal';
+    modal.className = 'modal file-view-modal';
+    modal.innerHTML = `
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>${escapeHtml(fileName)}</h3>
+                <button class="close-modal" onclick="document.getElementById('fileViewModal')?.remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <pre>${escapeHtml(content)}</pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-close" onclick="document.getElementById('fileViewModal')?.remove()">Close</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
 }
