@@ -58,18 +58,43 @@ function renderTeamsList() {
     }).join('');
     
     teamsList.innerHTML = teamsHTML;
+    // If a team was specified via query string, auto-select it
+    autoSelectFromQueryParam();
 }
 
 function selectTeam(teamName) {
-    // Update active team
-    document.querySelectorAll('.team-item').forEach(item => {
-        item.classList.remove('active');
+    // Update active team classes
+    document.querySelectorAll('.team-item').forEach(item => item.classList.remove('active'));
+
+    // Try to find the clicked element by matching the team name text
+    const targetNameNormalized = teamName ? teamName.trim().toLowerCase() : '';
+    const matchedItem = Array.from(document.querySelectorAll('.team-item')).find(it => {
+        const nameEl = it.querySelector('.team-name');
+        const nameText = nameEl ? nameEl.textContent.trim().toLowerCase() : '';
+        return nameText === targetNameNormalized;
     });
-    
-    event.currentTarget.classList.add('active');
+
+    if (matchedItem) {
+        matchedItem.classList.add('active');
+    }
+
     currentTeam = teamName;
-    
     renderSubmissions(teamName);
+}
+
+// Auto-select team if `team` query parameter is present in the URL
+function autoSelectFromQueryParam() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const teamParam = params.get('team');
+        if (teamParam && teamsData && teamsData[teamParam]) {
+            // Delay slightly to ensure DOM is rendered
+            setTimeout(() => selectTeam(teamParam), 50);
+        }
+    } catch (e) {
+        // ignore
+        console.debug('autoSelectFromQueryParam error', e);
+    }
 }
 
 
