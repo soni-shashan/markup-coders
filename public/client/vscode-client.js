@@ -3083,7 +3083,7 @@ getAvailableHtmlFiles() {
     // Don't modify relative paths in HTML - let the navigation script handle it
     // This prevents breaking the original href attributes
     
-    // Replace CSS links with inline styles
+    // Replace CSS lins with inline styles
     if (cssContent) {
         const styleTag = `<style>\n${cssContent}</style>`;
         
