@@ -35,8 +35,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret-key';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/eyecoders';
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.error('Missing Google OAuth credentials. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file');
-    process.exit(1);
+    console.warn('Warning: Missing Google OAuth credentials. Google OAuth routes will be disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable.');
 }
 
 // Middleware
@@ -387,6 +386,8 @@ async function createSubmissionFiles(submission, outputDir, options = {}) {
         if (!fs.existsSync(outputDir)) {
             await mkdir(outputDir, { recursive: true });
         }
+        const safeHtml = submission.htmlCode || '';
+
         const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -396,7 +397,7 @@ async function createSubmissionFiles(submission, outputDir, options = {}) {
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    ${submission.htmlCode.replace(/<html[^>]*>|<\/html>|<head[^>]*>|<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')}
+    ${safeHtml.replace(/<html[^>]*>|<\/html>|<head[^>]*>|<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')}
     <script src="script.js"></script>
 </body>
 </html>`;
@@ -1108,6 +1109,16 @@ app.get('/api/admin/download-all-teams', async (req, res) => {
     console.log('Download all teams request received');
     
     try {
+        // Check MongoDB connection state before proceeding
+        // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+        if (mongoose.connection.readyState !== 1) {
+            console.error('MongoDB not connected (state:', mongoose.connection.readyState + ')');
+            return res.status(503).json({
+                success: false,
+                message: 'MongoDB is not connected. Please ensure the database is running.',
+                connectionState: mongoose.connection.readyState
+            });
+        }
         const teams = await Team.find();
         const allSubmissions = await Submission.find().sort({ submittedAt: -1 });
         
