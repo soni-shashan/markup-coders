@@ -2553,25 +2553,26 @@ addEnhancedLiveReloadScript(htmlContent) {
                         this.initialized = true;
                     },
                     
+                    // Safely navigate by replacing head/body parts instead of document.write
                     navigate: function(targetPage) {
                         console.log('🔄 Navigating to:', targetPage);
-                        
+
                         if (window.opener && window.opener.editor) {
                             const content = window.opener.editor.getPageContent(targetPage);
                             if (content) {
                                 // Store scroll position
                                 const scrollPos = { x: window.scrollX, y: window.scrollY };
-                                
+
                                 try {
-                                    // Update content safely
-                                    document.open();
-                                    document.write(content);
-                                    document.close();
-                                    
+                                    this.safeReplacePageContent(content);
+
                                     // Update current page and URL
                                     this.currentPage = targetPage;
                                     this.updateURL(targetPage);
-                                    
+
+                                    // restore scroll
+                                    setTimeout(() => window.scrollTo(scrollPos.x, scrollPos.y), 30);
+
                                     console.log('✅ Navigation completed to:', targetPage);
                                     return true;
                                 } catch (error) {
@@ -2828,13 +2829,8 @@ addEnhancedLiveReloadScript(htmlContent) {
                             if (content) {
                                 const scrollPos = { x: window.scrollX, y: window.scrollY };
                                 try {
-                                    document.open();
-                                    document.write(content);
-                                    document.close();
-                                    
-                                    setTimeout(() => {
-                                        window.scrollTo(scrollPos.x, scrollPos.y);
-                                    }, 50);
+                                    this.safeReplacePageContent(content);
+                                    setTimeout(() => window.scrollTo(scrollPos.x, scrollPos.y), 30);
                                 } catch (error) {
                                     console.error('Reload error:', error);
                                 }
@@ -2846,6 +2842,76 @@ addEnhancedLiveReloadScript(htmlContent) {
                         setInterval(() => {
                             this.checkForUpdates();
                         }, 1000);
+                    }
+                    ,
+
+                    // Replace document content without using document.write to avoid re-declaring globals
+                    safeReplacePageContent: function(newHtml) {
+                        try {
+                            // Parse a new document from the HTML string
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(newHtml, 'text/html');
+
+                            // Replace title
+                            if (doc.title) {
+                                document.title = doc.title;
+                            }
+
+                            // Replace or merge head styles/scripts: remove previously injected live-server script first
+                            // Remove any previously injected live-server markers to avoid duplicates
+                            const previousMarker = document.getElementById('eye-coders-live-server-marker');
+                            if (previousMarker) previousMarker.remove();
+
+                            // Replace body content
+                            document.body.innerHTML = doc.body.innerHTML;
+
+                            // Copy over non-conflicting head children (styles and meta)
+                            const allowedHeadTags = ['META', 'STYLE', 'LINK', 'TITLE'];
+                            const currentHead = document.head;
+                            // Remove previously injected inline CSS/JS aggregated by editor (but keep original links)
+                            const injectedMarkers = currentHead.querySelectorAll('[data-live-injected]');
+                            injectedMarkers.forEach(n => n.remove());
+
+                            // Add styles from parsed doc
+                            Array.from(doc.head.children).forEach(node => {
+                                if (allowedHeadTags.includes(node.tagName)) {
+                                    const clone = node.cloneNode(true);
+                                    clone.setAttribute('data-live-injected', '1');
+                                    currentHead.appendChild(clone);
+                                }
+                            });
+
+                            // Execute scripts from body in order, but guard global redeclarations by wrapping in IIFE
+                            const scripts = Array.from(document.body.querySelectorAll('script'));
+                            for (const s of scripts) {
+                                if (s.src) {
+                                    // External script: load via new script element
+                                    const scriptEl = document.createElement('script');
+                                    scriptEl.src = s.src;
+                                    scriptEl.async = false;
+                                    document.body.appendChild(scriptEl);
+                                } else {
+                                    // Inline script: execute in IIFE to prevent leaking declarations
+                                    try {
+                                        const code = s.textContent || '';
+                                        // Wrap code to avoid 'let/const' redeclare errors in top-level when duplicated
+                                        const inline = document.createElement('script');
+                                        inline.textContent = '(function(window, document){try\\{\\n' + code + '\\n}catch(e){console.warn("Live server inline script error:", e);} })(window, document);';
+                                        document.body.appendChild(inline);
+                                    } catch (e) {
+                                        console.warn('Failed to execute inline script safely:', e);
+                                    }
+                                }
+                            }
+
+                            // Re-run any initialization for live server UI (marker)
+                            const marker = document.createElement('meta');
+                            marker.id = 'eye-coders-live-server-marker';
+                            document.head.appendChild(marker);
+                        } catch (err) {
+                            console.error('safeReplacePageContent failed:', err);
+                            throw err;
+                        }
                     }
                 };
                 
@@ -3139,9 +3205,19 @@ getCurrentPageFromUrl() {
                         if (window.opener && window.opener.editor) {
                             const content = window.opener.editor.getPageContent(page);
                             if (content) {
-                                document.open();
-                                document.write(content);
-                                document.close();
+                                if (window.EyeCodersLiveServer && typeof window.EyeCodersLiveServer.safeReplacePageContent === 'function') {
+                                    window.EyeCodersLiveServer.safeReplacePageContent(content);
+                                } else {
+                                    try {
+                                        // Fallback: replace whole document (less safe)
+                                        document.open();
+                                        document.write(content);
+                                        document.close();
+                                    } catch (e) {
+                                        // If document.write fails, navigate to same URL with hash
+                                        location.hash = '#' + page;
+                                    }
+                                }
                                 this.currentPage = page;
                                 this.updateURL(page);
                             }
@@ -3175,9 +3251,17 @@ getCurrentPageFromUrl() {
                         if (window.opener && window.opener.editor) {
                             const content = window.opener.editor.getPageContent(this.currentPage);
                             if (content) {
-                                document.open();
-                                document.write(content);
-                                document.close();
+                                if (window.EyeCodersLiveServer && typeof window.EyeCodersLiveServer.safeReplacePageContent === 'function') {
+                                    window.EyeCodersLiveServer.safeReplacePageContent(content);
+                                } else {
+                                    try {
+                                        document.open();
+                                        document.write(content);
+                                        document.close();
+                                    } catch (e) {
+                                        console.warn('Live reload fallback failed:', e);
+                                    }
+                                }
                             }
                         }
                     }
