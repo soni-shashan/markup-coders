@@ -1,0 +1,14 @@
+Submission Information
+=====================
+Team Name: CodeCrafters
+Student ID: 24CS032
+Email: 24cs032@charusat.edu.in
+Submission ID: CodeCrafters@24CS032:24cs032@charusat.edu.in
+Submitted At: 9/24/2025, 2:17:30 PM
+
+Files Included:
+- index.html (Main HTML file)
+- style.css (CSS styles)
+- script.js (JavaScript code)
+- output.pdf (PDF of the rendered output)
+- info.txt (This file)

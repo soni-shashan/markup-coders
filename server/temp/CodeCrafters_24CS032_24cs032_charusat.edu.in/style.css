@@ -1,0 +1,102 @@
+/* body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px; 
+    background-color: #000000;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+p {
+    font-size: 1.2em;
+    max-width: 600px;
+    line-height: 1.6;
+}
+ */
+*{
+        background-color:black;
+        color: white;
+    
+ }
+#header{
+    display : grid;
+    grid-template-columns:1fr 1fr 1fr; 
+    background-color : #444444 ;
+    }
+#H_Part2{
+    display : inline-flex;
+    gap:15px;
+    background-color:gray;
+    border-radius : 8px ;
+    padding :5px;
+    
+    }
+    #btn{
+        background-color : red;
+        border-radius:8px;
+        }
+    
+    #1{
+        text-align :center ;}
+
+    #box{
+        display : grid ;
+        grid-template-columns:1fr 1fr 1fr;
+        gap: 15px;
+        
+        }
+        #box-1,#task1,#box-1 p{
+            background-color:blue;border-radius:8px;       
+             }
+            
+            #box-2,#task2,#box-2 p{
+            background-color:purple;border-radius:8px;        
+            }
+            #box-3,#task3,#box-3 p{
+            background-color:red;border-radius:8px;       
+             }
+             
+             #task1 ,#task2, #task3{
+                 border : 2px solid;color:black;
+                 }
+       #last{
+       
+        display : grid ;
+        grid-template-columns:1fr 1fr 1fr;
+        gap: 15px;
+        
+        }
+       #form input{
+            width : 100%;
+            background-color:#444444;
+            }
+            #btn1{
+                width :100%;
+                border-radius:8px;
+                background-color:red;}
+            .FD{
+                background-color:green;
+                border-radius:8px;
+                }
+                #JS{background-color:red;
+                border-radius:8px;}
+                
+                #H_Part3{
+   text-align:center;
+    
+    }
+    
+    #form ,#middle ,#3{
+        border-radius:8px;
+      }

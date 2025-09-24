@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 3000;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret-key';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27018/eyecoders';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/eyecoders';
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     console.error('Missing Google OAuth credentials. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file');
