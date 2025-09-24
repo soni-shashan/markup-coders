@@ -1242,7 +1242,7 @@ app.post('/api/client/temp-save', requireAuth, async (req, res) => {
             }
         );
         
-        res.json({ success: true, message: 'Project auto-saved' });
+        res.json({ success: true, message: 'Project auto-saved successfully' });
     } catch (error) {
         console.error('Temp save error:', error);
         res.status(400).json({ success: false, message: error.message });
@@ -1300,7 +1300,6 @@ app.post('/api/client/submit', requireAuth, async (req, res) => {
         res.status(400).json({ success: false, message: error.message });
     }
 });
-
 
 // Get temp code and latest submission for comparison
 app.get('/api/client/restore-data', requireAuth, async (req, res) => {

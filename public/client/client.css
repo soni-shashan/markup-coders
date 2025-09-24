@@ -823,3 +823,231 @@ body.monokai-theme {
 .syntax-number { color: #ae81ff; }
 .syntax-operator { color: #f92672; }
 .syntax-function { color: #a6e22e; }
+/* Login Prompt Styles */
+.login-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.login-content {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+}
+
+.login-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+    border-radius: 50%;
+}
+
+.login-content h2 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.login-content p {
+    color: #666;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 20px;
+    background: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.google-login-btn:hover {
+    background: #357ae8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3);
+}
+
+.google-login-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.login-note {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.login-note p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Modal Enhancements */
+.modal.large .modal-content {
+    max-width: 800px;
+}
+
+.shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.shortcut-category h4 {
+    color: var(--accent-blue);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-keys {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+}
+
+.shortcut-keys kbd {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    margin: 0 2px;
+    color: var(--text-primary);
+}
+
+.shortcut-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Search Result Styles */
+.search-result {
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    margin-bottom: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.search-result:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.search-result strong {
+    color: var(--accent-blue);
+}
+
+.search-result small {
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 4px;
+    font-family: 'Consolas', monospace;
+}
+
+/* File Tree Enhancements */
+.folder-contents {
+    padding-left: 20px;
+    border-left: 1px solid var(--border-color);
+    margin-left: 8px;
+}
+
+.file-item.active {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.file-item.active i {
+    color: white;
+}
+
+/* Status Bar Enhancements */
+.live-server-status.online {
+    color: #28a745;
+}
+
+.live-server-status.offline {
+    color: #dc3545;
+}
+
+/* Animation Enhancements */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.alert {
+    animation: slideInFromRight 0.3s ease;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .login-content {
+        padding: 30px 20px;
+    }
+    
+    .shortcuts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+}
+
+/* Theme-specific adjustments */
+body.light-theme .login-prompt {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+body.monokai-theme .login-prompt {
+    background: linear-gradient(135deg, #fd746c 0%, #ff9068 100%);
+}

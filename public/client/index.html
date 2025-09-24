@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eye Coders Club - VS Code Editor</title>
-    <link rel="stylesheet" href="client.css">
+    <link rel="stylesheet" href="vscode-client.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
 </head>
@@ -91,10 +91,10 @@
                     <div class="features-list">
                         <div class="feature-item">
                             <i class="fas fa-palette"></i>
-                            <span>Theme Selector</span>
+                            <span>Theme</span>
                             <select id="themeSelector">
-                                <option value="dark">Dark Theme</option>
-                                <option value="light">Light Theme</option>
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
                                 <option value="monokai">Monokai</option>
                             </select>
                         </div>
@@ -111,7 +111,7 @@
                         <div class="feature-item">
                             <i class="fas fa-keyboard"></i>
                             <span>Shortcuts</span>
-                            <button class="shortcuts-btn">View Shortcuts</button>
+                            <button class="shortcuts-btn" id="shortcutsBtn">View</button>
                         </div>
                     </div>
                 </div>
@@ -135,15 +135,15 @@
                             <h2>Welcome to Eye Coders Club IDE</h2>
                             <p>Start by creating a new file or opening an existing one from the explorer.</p>
                             <div class="quick-actions">
-                                <button class="quick-action-btn" onclick="createNewFile('index.html')">
+                                <button class="quick-action-btn" data-file="index.html">
                                     <i class="fas fa-file-code"></i>
                                     New HTML File
                                 </button>
-                                <button class="quick-action-btn" onclick="createNewFile('style.css')">
+                                <button class="quick-action-btn" data-file="style.css">
                                     <i class="fab fa-css3-alt"></i>
                                     New CSS File
                                 </button>
-                                <button class="quick-action-btn" onclick="createNewFile('script.js')">
+                                <button class="quick-action-btn" data-file="script.js">
                                     <i class="fab fa-js-square"></i>
                                     New JS File
                                 </button>
@@ -163,7 +163,7 @@
             <div class="status-right">
                 <span id="fileType">Plain Text</span>
                 <span id="autoSaveStatus">Auto-save: On</span>
-                <div id="liveServerStatus" class="live-server-status">
+                <div id="liveServerStatus" class="live-server-status offline">
                     <i class="fas fa-circle"></i>
                     <span>Live Server: Offline</span>
                 </div>
@@ -180,7 +180,7 @@
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <input type="text" id="newFileName" placeholder="Enter file name (e.g., index.html)">
+                <input type="text" id="newFileName" placeholder="Enter file name (e.g., page.html)">
                 <div class="file-templates">
                     <button class="template-btn" data-template="html">HTML Template</button>
                     <button class="template-btn" data-template="css">CSS Template</button>
@@ -207,6 +207,82 @@
             <div class="modal-footer">
                 <button class="btn-cancel">Cancel</button>
                 <button class="btn-create">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shortcuts Modal -->
+    <div id="shortcutsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-category">
+                        <h4>File Operations</h4>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>N</kbd></span>
+                            <span class="shortcut-desc">New File</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>S</kbd></span>
+                            <span class="shortcut-desc">Save All</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>W</kbd></span>
+                            <span class="shortcut-desc">Close Tab</span>
+                        </div>
+                    </div>
+                    <div class="shortcut-category">
+                        <h4>Editing</h4>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Z</kbd></span>
+                            <span class="shortcut-desc">Undo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Y</kbd></span>
+                            <span class="shortcut-desc">Redo</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Tab</kbd></span>
+                            <span class="shortcut-desc">Indent</span>
+                        </div>
+                    </div>
+                    <div class="shortcut-category">
+                        <h4>Navigation</h4>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>F</kbd></span>
+                            <span class="shortcut-desc">Search</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>Tab</kbd></span>
+                            <span class="shortcut-desc">Switch Tab</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span class="shortcut-keys"><kbd>Ctrl</kbd> + <kbd>`</kbd></span>
+                            <span class="shortcut-desc">Toggle Live Server</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Prompt -->
+    <div id="loginPrompt" class="login-prompt" style="display: none;">
+        <div class="login-content">
+            <img src="../assets/logo.png" alt="Eye Coders Club" class="login-logo">
+            <h2>Welcome to Eye Coders Club IDE</h2>
+            <p>Please sign in with your registered Google account to continue.</p>
+            <button class="google-login-btn" id="googleLoginBtn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+                Sign in with Google
+            </button>
+            <div class="login-note">
+                <p><strong>Note:</strong> Only registered team members can access this platform.</p>
+                <p>If you're having trouble logging in, please contact your administrator.</p>
             </div>
         </div>
     </div>
