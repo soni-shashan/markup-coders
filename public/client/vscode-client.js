@@ -3047,20 +3047,13 @@ getPageContent(pagePath) {
         return lastModified;
     }
 
-    showNewFileModal() {
-        document.getElementById('newFileModal').style.display = 'flex';
-        document.getElementById('newFileName').focus();
-    }
 
-    showNewFolderModal() {
-        document.getElementById('newFolderModal').style.display = 'flex';
-        document.getElementById('newFolderName').focus();
-    }
 
     showShortcutsModal() {
         document.getElementById('shortcutsModal').style.display = 'flex';
     }
 
+    
     setupModalEventListeners() {
     // New File Modal
     const newFileModal = document.getElementById('newFileModal');
