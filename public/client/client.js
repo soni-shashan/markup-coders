@@ -2,206 +2,6 @@ let currentTeam = null;
 let autoSaveInterval = null;
 let restoreData = null;
 
-// Welcome banner configuration
-const WELCOME_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-
-function maybeShowWelcomeBanner() {
-    try {
-        console.log('maybeShowWelcomeBanner: entered', { currentTeam: !!currentTeam });
-        
-        if (!currentTeam) {
-            console.log('maybeShowWelcomeBanner: no currentTeam yet, retrying shortly');
-            setTimeout(maybeShowWelcomeBanner, 300);
-            return;
-        }
-        
-        // Wait a bit to ensure DOM is ready
-        setTimeout(() => {
-            console.log('maybeShowWelcomeBanner: showing welcome overlay');
-            showWelcomeOverlay(WELCOME_DURATION_MS);
-        }, 500);
-        
-    } catch (e) {
-        console.error('maybeShowWelcomeBanner error', e);
-    }
-}
-
-function startCountdown(durationInMinutes, buttonId, timerId) {
-      const button = document.getElementById(buttonId);
-      const timerDisplay = document.getElementById(timerId);
-      let timeLeft = durationInMinutes * 60; // convert minutes to seconds
-
-      const interval = setInterval(() => {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-
-        timerDisplay.textContent = `(${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')})`;
-
-        if (timeLeft <= 0) {
-          clearInterval(interval);
-          button.disabled = false; // enable the button
-        }
-
-        timeLeft--;
-      }, 1000);
-}
-
-
-function showWelcomeOverlay(durationMs) {
-    console.log('showWelcomeOverlay called', { durationMs });
-    
-    const overlay = document.getElementById('welcomeOverlay');
-    const minutesEl = document.getElementById('countdownMinutes');
-    const secondsEl = document.getElementById('countdownSeconds');
-    const progressBar = document.getElementById('progressBar');
-    const closeBtn = document.getElementById('welcomeClose');
-    const image = document.getElementById('welcomeImage');
-    image.src = currentTeam.image;
-    console.log('Elements found:', { 
-        overlay: !!overlay, 
-        minutes: !!minutesEl, 
-        seconds: !!secondsEl,
-        progressBar: !!progressBar,
-        closeBtn: !!closeBtn 
-    });
-
-    if (!overlay) {
-        console.error('showWelcomeOverlay: overlay element not found');
-        return;
-    }
-
-    // Show the overlay with proper styling
-    try {
-        overlay.style.display = 'flex';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.right = '0';
-        overlay.style.bottom = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.zIndex = '10000';
-        overlay.style.pointerEvents = 'auto';
-        
-        console.log('Overlay styles applied successfully');
-    } catch (e) {
-        console.error('Could not apply overlay styles', e);
-    }
-
-    document.body.classList.add('welcome-active');
-    overlay.setAttribute('aria-hidden', 'false');
-
-    const totalSeconds = Math.floor(durationMs / 1000);
-    let remainingSeconds = totalSeconds;
-    
-    console.log('Starting countdown with', remainingSeconds, 'seconds');
-
-    function updateCountdown() {
-        const minutes = Math.floor(remainingSeconds / 60);
-        const seconds = remainingSeconds % 60;
-        
-        // Update display if elements exist
-        if (minutesEl) {
-            minutesEl.textContent = minutes.toString().padStart(2, '0');
-        }
-        if (secondsEl) {
-            secondsEl.textContent = seconds.toString().padStart(2, '0');
-        }
-        
-        // Update progress bar if it exists
-        if (progressBar) {
-            const progressPercentage = ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
-            progressBar.style.width = progressPercentage + '%';
-        }
-        
-        console.log(`Countdown: ${minutes}:${seconds.toString().padStart(2, '0')} (${remainingSeconds} seconds left)`);
-        
-        // Change colors when time is running low
-        if (remainingSeconds <= 30) {
-            if (minutesEl) minutesEl.style.color = '#ff6b6b';
-            if (secondsEl) secondsEl.style.color = '#ff6b6b';
-            if (progressBar) progressBar.style.background = 'linear-gradient(90deg, #ff6b6b, #ff4757)';
-        } else if (remainingSeconds <= 60) {
-            if (minutesEl) minutesEl.style.color = '#ffd93d';
-            if (secondsEl) secondsEl.style.color = '#ffd93d';
-            if (progressBar) progressBar.style.background = 'linear-gradient(90deg, #ffd93d, #ff6b6b)';
-        }
-    }
-
-    // Initial update
-    updateCountdown();
-
-    const countdownInterval = setInterval(() => {
-        remainingSeconds--;
-        
-        if (remainingSeconds < 0) {
-            remainingSeconds = 0;
-            updateCountdown();
-            clearInterval(countdownInterval);
-            console.log('Countdown finished, closing overlay');
-            startCountdown(30,'imageBtn','timer')
-            const imageBtn = document.getElementById('imageBtn');
-            if (imageBtn) {
-                imageBtn.disabled = true; 
-            }
-            closeWelcomeOverlay();
-            return;
-        }
-        
-        updateCountdown();
-    }, 1000);
-
-    function onCloseEarly() {
-        console.log('Close button clicked');
-        clearInterval(countdownInterval);
-        closeWelcomeOverlay();
-    }
-
-    // Attach close button listener
-    if (closeBtn) {
-        closeBtn.addEventListener('click', onCloseEarly, { once: true });
-        console.log('Close button listener attached');
-    } else {
-        console.warn('Close button not found');
-    }
-
-    // Close on Escape key
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            console.log('Escape key pressed');
-            clearInterval(countdownInterval);
-            closeWelcomeOverlay();
-            document.removeEventListener('keydown', handleEscape);
-        }
-    };
-    
-    document.addEventListener('keydown', handleEscape);
-    
-    console.log('Welcome overlay should now be visible with working countdown');
-}
-
-function closeWelcomeOverlay() {
-    console.log('closeWelcomeOverlay called');
-    
-    const overlay = document.getElementById('welcomeOverlay');
-    if (overlay) {
-        // Add closing animation
-        overlay.style.animation = 'fadeOut 0.5s ease-out forwards';
-        
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            overlay.style.animation = '';
-            console.log('Welcome overlay closed');
-        }, 500);
-    } else {
-        console.error('Could not find overlay to close');
-    }
-    
-    document.body.classList.remove('welcome-active');
-}
-
 
 // Enhanced editor functionality
 let editorHistory = {
@@ -250,12 +50,6 @@ async function initializeInterface() {
             console.log('Team found, updating display...');
             await updateTeamDisplay();
             const submitBtnEl = document.getElementById('submitBtn');
-            const imageBtn = document.getElementById('imageBtn');
-            if (imageBtn) {
-                imageBtn.disabled = true;
-            } else {
-                console.warn('imageBtn not found when enabling submit');
-            }
             if (submitBtnEl) {
                 submitBtnEl.disabled = false;
             } else {
@@ -341,43 +135,15 @@ async function updateTeamDisplay() {
         }
         
         // Show welcome banner after team display is updated
-        console.log(currentTeam.isFirstTimeUser)
         console.log('updateTeamDisplay: calling maybeShowWelcomeBanner');
-        if (currentTeam.isFirstTimeUser) {
-            await maybeShowWelcomeBanner();
-            await markUserAsNotFirstTime();
-        }else{
-            startCountdown(30,'imageBtn','timer')
-        }
+
         
     } else {
         console.error('No currentTeam data available for display');
     }
 }
 
-async function markUserAsNotFirstTime() {
-    try {
-        const response = await fetch('/isFirstTimeUser', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        const result = await response.json();
-        if (result.success) {
-            console.log('User marked as not first time successfully');
-            currentTeam.isFirstTimeUser = false;
-        } else {
-            console.error('Failed to mark user as not first time:', result.message);
-        }
-    } catch (error) {
-        console.error('Error marking user as not first time:', error);
-    }
-}
+
 
 function showLoginPrompt() {
     document.getElementById('loadingOverlay').style.display = 'none';
@@ -431,14 +197,7 @@ function setupEventListeners() {
     }
 
     const submitBtn = document.getElementById('submitBtn');
-    const imageBtn = document.getElementById('imageBtn');
-    if (imageBtn) {
-        imageBtn.addEventListener('click', function() {
-            showWelcomeOverlay(2*60*1000);
-        });
-    } else {
-        console.warn('imageBtn not found; image functionality disabled');
-    }
+   
     if (submitBtn) {
         submitBtn.addEventListener('click', submitCode);
     } else {
