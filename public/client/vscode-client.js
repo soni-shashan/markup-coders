@@ -131,8 +131,8 @@ class VSCodeEditor {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Project - Eye Coders Club</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>${fileName.replace('.html', '')}</title>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
     <header>
@@ -141,41 +141,39 @@ class VSCodeEditor {
                 <h1>My Website</h1>
             </div>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="pages/about.html">About</a></li>
-                <li><a href="pages/contact.html">Contact</a></li>
-                <li><a href="pages/services.html">Services</a></li>
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="services.html">Services</a></li>
             </ul>
         </nav>
     </header>
     
     <main>
-        <section class="hero">
-            <div class="hero-content">
-                <h2>Welcome to Eye Coders Club!</h2>
-                <p>Start building amazing projects with our powerful IDE.</p>
-                <button class="cta-button" onclick="showMessage()">Get Started</button>
+        <section class="page-header">
+            <div class="container">
+                <h2 data-animate="fade-in">Welcome to ${fileName.replace('.html', '')}</h2>
+                <p data-animate="fade-in">Start building your amazing content here!</p>
             </div>
         </section>
         
-        <section class="features">
+        <section class="page-content">
             <div class="container">
-                <h3>Our Features</h3>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <i class="fas fa-code"></i>
-                        <h4>Modern Editor</h4>
-                        <p>VS Code-like experience with syntax highlighting</p>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-eye"></i>
-                        <h4>Live Preview</h4>
-                        <p>See your changes instantly with our live server</p>
-                    </div>
-                    <div class="feature-card">
-                        <i class="fas fa-users"></i>
-                        <h4>Team Collaboration</h4>
-                        <p>Work together on projects seamlessly</p>
+                <h2 data-animate="slide-in">Your Content Here</h2>
+                <p data-animate="slide-in">Add your amazing content to this page.</p>
+                
+                <!-- Example interactive elements -->
+                <div class="interactive-demo">
+                    <button data-action="show-message" class="demo-btn">
+                        Show Custom Message
+                    </button>
+                    
+                    <button data-action="toggle-content" data-target="#hidden-content" class="demo-btn">
+                        Toggle Content
+                    </button>
+                    
+                    <div id="hidden-content" style="display: none; margin-top: 1rem; padding: 1rem; background: #f0f0f0; border-radius: 8px;">
+                        <p>This content can be toggled! 🎉</p>
                     </div>
                 </div>
             </div>
@@ -188,7 +186,7 @@ class VSCodeEditor {
         </div>
     </footer>
     
-    <script src="js/script.js"></script>
+    <script src="../js/script.js"></script>
 </body>
 </html>`,
                 type: 'html'
@@ -2533,255 +2531,337 @@ fixRelativePaths(htmlContent, currentPath) {
     
     return htmlContent;
 }
-
 addEnhancedLiveReloadScript(htmlContent) {
     const liveReloadScript = `
         <script>
-            // Enhanced Live Server with Better Navigation
-            window.liveServer = {
-                currentPage: '${this.getCurrentPageFromUrl()}',
-                lastModified: ${Date.now()},
-                fileMap: ${JSON.stringify(this.getFileMap())},
+            // Enhanced Live Server with Better Navigation - Conflict Safe
+            (function() {
+                'use strict';
                 
-                navigate: function(targetPage) {
-                    console.log('Navigating to:', targetPage);
+                // Avoid conflicts by using a unique namespace
+                window.EyeCodersLiveServer = window.EyeCodersLiveServer || {
+                    currentPage: '${this.getCurrentPageFromUrl()}',
+                    lastModified: ${Date.now()},
+                    fileMap: ${JSON.stringify(this.getFileMap())},
+                    initialized: false,
                     
-                    if (window.opener && window.opener.editor) {
-                        const content = window.opener.editor.getPageContent(targetPage);
-                        if (content) {
-                            // Store scroll position
-                            const scrollPos = { x: window.scrollX, y: window.scrollY };
-                            
-                            // Update content
-                            document.open();
-                            document.write(content);
-                            document.close();
-                            
-                            // Update current page and URL
-                            this.currentPage = targetPage;
-                            this.updateURL(targetPage);
-                            
-                            console.log('Navigation completed to:', targetPage);
-                            return true;
-                        } else {
-                            console.warn('Content not found for:', targetPage);
-                            this.showNavigationError(targetPage);
-                            return false;
-                        }
-                    }
-                    return false;
-                },
-                
-                updateURL: function(page) {
-                    try {
-                        const newUrl = window.location.origin + window.location.pathname + '#' + page;
-                        history.pushState({page: page}, '', newUrl);
-                    } catch(e) {
-                        console.warn('Could not update URL:', e);
-                    }
-                },
-                
-                showNavigationError: function(page) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.style.cssText = \`
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        background: #ff6b6b;
-                        color: white;
-                        padding: 15px 20px;
-                        border-radius: 8px;
-                        z-index: 10000;
-                        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                        font-family: Arial, sans-serif;
-                        max-width: 300px;
-                    \`;
-                    errorDiv.innerHTML = \`
-                        <strong>Page Not Found</strong><br>
-                        Could not find: \${page}
-                        <button onclick="this.parentElement.remove()" style="margin-left: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
-                    \`;
-                    document.body.appendChild(errorDiv);
+                    init: function() {
+                        if (this.initialized) return;
+                        console.log('🚀 Live Server initialized for:', this.currentPage);
+                        this.setupNavigation();
+                        this.startAutoRefresh();
+                        this.initialized = true;
+                    },
                     
-                    setTimeout(() => {
-                        if (errorDiv.parentElement) {
-                            errorDiv.remove();
-                        }
-                    }, 5000);
-                },
-                
-                checkForUpdates: function() {
-                    if (window.opener && !window.opener.closed && window.opener.editor) {
-                        try {
-                            const editor = window.opener.editor;
-                            const newModified = editor.getLastModified();
-                            if (newModified > this.lastModified) {
-                                this.lastModified = newModified;
-                                this.reload();
+                    navigate: function(targetPage) {
+                        console.log('🔄 Navigating to:', targetPage);
+                        
+                        if (window.opener && window.opener.editor) {
+                            const content = window.opener.editor.getPageContent(targetPage);
+                            if (content) {
+                                // Store scroll position
+                                const scrollPos = { x: window.scrollX, y: window.scrollY };
+                                
+                                try {
+                                    // Update content safely
+                                    document.open();
+                                    document.write(content);
+                                    document.close();
+                                    
+                                    // Update current page and URL
+                                    this.currentPage = targetPage;
+                                    this.updateURL(targetPage);
+                                    
+                                    console.log('✅ Navigation completed to:', targetPage);
+                                    return true;
+                                } catch (error) {
+                                    console.error('❌ Navigation error:', error);
+                                    this.showNavigationError(targetPage, error.message);
+                                    return false;
+                                }
+                            } else {
+                                console.warn('⚠️ Content not found for:', targetPage);
+                                this.showNavigationError(targetPage, 'Page content not found');
+                                return false;
                             }
-                        } catch (e) {
-                            // Ignore cross-origin errors
                         }
-                    } else if (window.opener && window.opener.closed) {
-                        // Parent window closed, show message
-                        this.showParentClosedMessage();
-                    }
-                },
-                
-                showParentClosedMessage: function() {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.style.cssText = \`
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        background: #ff9800;
-                        color: white;
-                        padding: 10px;
-                        text-align: center;
-                        z-index: 10000;
-                        font-family: Arial, sans-serif;
-                    \`;
-                    messageDiv.innerHTML = 'Live server connection lost - Editor window was closed';
-                    document.body.appendChild(messageDiv);
-                },
-                
-                reload: function() {
-                    if (window.opener && window.opener.editor) {
-                        const content = window.opener.editor.getPageContent(this.currentPage);
-                        if (content) {
-                            const scrollPos = { x: window.scrollX, y: window.scrollY };
-                            document.open();
-                            document.write(content);
-                            document.close();
+                        return false;
+                    },
+                    
+                    updateURL: function(page) {
+                        try {
+                            const newUrl = window.location.origin + window.location.pathname + '#' + page;
+                            history.pushState({page: page}, '', newUrl);
+                        } catch(e) {
+                            console.warn('Could not update URL:', e);
+                        }
+                    },
+                    
+                    showNavigationError: function(page, errorMessage) {
+                        // Remove existing error notifications
+                        const existingErrors = document.querySelectorAll('.live-server-error');
+                        existingErrors.forEach(error => error.remove());
+                        
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'live-server-error';
+                        errorDiv.style.cssText = \`
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #ff6b6b;
+                            color: white;
+                            padding: 15px 20px;
+                            border-radius: 8px;
+                            z-index: 10001;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                            font-family: Arial, sans-serif;
+                            max-width: 350px;
+                            animation: slideInRight 0.3s ease;
+                        \`;
+                        errorDiv.innerHTML = \`
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>Navigation Failed</strong><br>
+                                    Page: \${page}<br>
+                                    <small>\${errorMessage}</small>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" 
+                                        style="background: rgba(255,255,255,0.2); border: none; color: white; 
+                                               padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">×</button>
+                            </div>
+                        \`;
+                        document.body.appendChild(errorDiv);
+                        
+                        setTimeout(() => {
+                            if (errorDiv.parentElement) {
+                                errorDiv.remove();
+                            }
+                        }, 5000);
+                    },
+                    
+                    resolveRelativePath: function(href, currentPage) {
+                        console.log('🔍 Resolving path:', href, 'from current page:', currentPage);
+                        
+                        // Handle different types of links
+                        if (href.startsWith('http') || href.startsWith('//')) {
+                            console.log('🌐 External link, ignoring:', href);
+                            return null;
+                        }
+                        
+                        if (href.startsWith('#')) {
+                            console.log('⚓ Anchor link, ignoring:', href);
+                            return null;
+                        }
+                        
+                        if (href.startsWith('javascript:')) {
+                            console.log('🔧 JavaScript link, ignoring:', href);
+                            return null;
+                        }
+                        
+                        if (href.startsWith('/')) {
+                            console.log('📁 Absolute path:', href.substring(1));
+                            return href.substring(1);
+                        }
+                        
+                        // Handle relative paths
+                        const currentDir = currentPage.includes('/') ? currentPage.substring(0, currentPage.lastIndexOf('/')) : '';
+                        console.log('📂 Current directory:', currentDir);
+                        
+                        let resolvedPath = href;
+                        
+                        // Handle ../
+                        if (href.startsWith('../')) {
+                            console.log('⬆️ Going up directory from:', currentDir);
+                            let tempHref = href;
+                            let upLevels = 0;
                             
-                            // Restore scroll position
-                            setTimeout(() => {
-                                window.scrollTo(scrollPos.x, scrollPos.y);
-                            }, 50);
-                        }
-                    }
-                },
-                
-                resolveRelativePath: function(href, currentPage) {
-                    console.log('Resolving path:', href, 'from current page:', currentPage);
-                    
-                    // Handle different types of links
-                    if (href.startsWith('http') || href.startsWith('//')) {
-                        console.log('External link, ignoring:', href);
-                        return null; // External link
-                    }
-                    
-                    if (href.startsWith('#')) {
-                        console.log('Anchor link, ignoring:', href);
-                        return null; // Anchor link
-                    }
-                    
-                    if (href.startsWith('/')) {
-                        console.log('Absolute path:', href.substring(1));
-                        return href.substring(1); // Absolute path
-                    }
-                    
-                    // Handle relative paths
-                    const currentDir = currentPage.includes('/') ? currentPage.substring(0, currentPage.lastIndexOf('/')) : '';
-                    console.log('Current directory:', currentDir);
-                    
-                    let resolvedPath = href;
-                    
-                    // Handle ../
-                    if (href.startsWith('../')) {
-                        console.log('Going up directory from:', currentDir);
-                        const parts = currentDir.split('/').filter(p => p);
-                        let upLevels = 0;
-                        let tempHref = href;
-                        
-                        while (tempHref.startsWith('../')) {
-                            upLevels++;
-                            tempHref = tempHref.substring(3);
-                        }
-                        
-                        console.log('Going up', upLevels, 'levels, remaining path:', tempHref);
-                        
-                        if (upLevels >= parts.length) {
-                            // Going up to root or beyond
-                            resolvedPath = tempHref;
-                        } else {
-                            const newParts = parts.slice(0, -upLevels);
-                            resolvedPath = newParts.length > 0 ? newParts.join('/') + '/' + tempHref : tempHref;
-                        }
-                    } else if (currentDir) {
-                        // Handle ./
-                        if (href.startsWith('./')) {
-                            resolvedPath = currentDir + '/' + href.substring(2);
-                        } else {
+                            while (tempHref.startsWith('../')) {
+                                upLevels++;
+                                tempHref = tempHref.substring(3);
+                            }
+                            
+                            console.log('📊 Going up', upLevels, 'levels, remaining path:', tempHref);
+                            
+                            if (currentDir) {
+                                const parts = currentDir.split('/').filter(p => p);
+                                if (upLevels >= parts.length) {
+                                    resolvedPath = tempHref;
+                                } else {
+                                    const newParts = parts.slice(0, -upLevels);
+                                    resolvedPath = newParts.length > 0 ? newParts.join('/') + '/' + tempHref : tempHref;
+                                }
+                            } else {
+                                resolvedPath = tempHref;
+                            }
+                        } else if (href.startsWith('./')) {
+                            if (currentDir) {
+                                resolvedPath = currentDir + '/' + href.substring(2);
+                            } else {
+                                resolvedPath = href.substring(2);
+                            }
+                        } else if (currentDir && !href.includes('/')) {
                             resolvedPath = currentDir + '/' + href;
                         }
-                    }
-                    
-                    console.log('Resolved path:', resolvedPath);
-                    return resolvedPath;
-                }
-            };
-            
-            // Set up auto-refresh
-            setInterval(function() {
-                window.liveServer.checkForUpdates();
-            }, 1000);
-            
-            // Handle navigation when DOM is loaded
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('Live server initialized for:', window.liveServer.currentPage);
-                
-                // Override all link clicks
-                document.addEventListener('click', function(e) {
-                    const link = e.target.closest('a');
-                    if (link && link.href) {
-                        const href = link.getAttribute('href');
-                        console.log('Link clicked:', href, 'from page:', window.liveServer.currentPage);
                         
-                        if (href && (href.endsWith('.html') || href.includes('.html'))) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            const targetPage = window.liveServer.resolveRelativePath(href, window.liveServer.currentPage);
-                            if (targetPage) {
-                                console.log('Navigating to resolved page:', targetPage);
-                                window.liveServer.navigate(targetPage);
-                            } else {
-                                console.log('External or anchor link, allowing default behavior');
+                        console.log('✅ Resolved path:', resolvedPath);
+                        return resolvedPath;
+                    },
+                    
+                    setupNavigation: function() {
+                        // Override all link clicks with better error handling
+                        document.addEventListener('click', (e) => {
+                            const link = e.target.closest('a');
+                            if (link && link.href) {
+                                const href = link.getAttribute('href');
+                                console.log('🔗 Link clicked:', href, 'from page:', this.currentPage);
+                                
+                                if (href && this.shouldInterceptLink(href)) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    const targetPage = this.resolveRelativePath(href, this.currentPage);
+                                    if (targetPage !== null) {
+                                        console.log('🎯 Navigating to resolved page:', targetPage);
+                                        const success = this.navigate(targetPage);
+                                        if (!success) {
+                                            console.warn('⚠️ Primary navigation failed, trying alternatives');
+                                            this.tryAlternativeNavigation(href, targetPage);
+                                        }
+                                    } else {
+                                        console.log('🔄 External or special link, allowing default behavior');
+                                    }
+                                    return false;
+                                }
                             }
-                            return false;
+                        }, true);
+                        
+                        // Handle browser back/forward
+                        window.addEventListener('popstate', (e) => {
+                            if (e.state && e.state.page) {
+                                console.log('⬅️ Browser navigation to:', e.state.page);
+                                this.navigate(e.state.page);
+                            }
+                        });
+                    },
+                    
+                    shouldInterceptLink: function(href) {
+                        return href && (
+                            href.endsWith('.html') || 
+                            href.includes('.html') || 
+                            (!href.startsWith('http') && 
+                             !href.startsWith('#') && 
+                             !href.startsWith('javascript:') && 
+                             !href.includes('.css') && 
+                             !href.includes('.js') && 
+                             !href.includes('.png') && 
+                             !href.includes('.jpg') && 
+                             !href.includes('.gif'))
+                        );
+                    },
+                    
+                    tryAlternativeNavigation: function(originalHref, resolvedPath) {
+                        const alternatives = [
+                            originalHref,
+                            originalHref.replace('../', ''),
+                            originalHref.replace('./', ''),
+                            \`pages/\${originalHref}\`,
+                            \`pages/\${originalHref.replace('../', '')}\`,
+                            resolvedPath,
+                            \`\${originalHref}.html\`,
+                            \`\${resolvedPath}.html\`
+                        ].filter((path, index, arr) => arr.indexOf(path) === index); // Remove duplicates
+                        
+                        console.log('🔄 Trying alternative paths:', alternatives);
+                        
+                        for (const alt of alternatives) {
+                            if (alt && this.navigate(alt)) {
+                                console.log('✅ Alternative navigation successful:', alt);
+                                return true;
+                            }
                         }
+                        
+                        console.error('❌ All navigation attempts failed for:', originalHref);
+                        return false;
+                    },
+                    
+                    checkForUpdates: function() {
+                        if (window.opener && !window.opener.closed && window.opener.editor) {
+                            try {
+                                const editor = window.opener.editor;
+                                const newModified = editor.getLastModified();
+                                if (newModified > this.lastModified) {
+                                    this.lastModified = newModified;
+                                    this.reload();
+                                }
+                            } catch (e) {
+                                // Ignore cross-origin errors
+                            }
+                        } else if (window.opener && window.opener.closed) {
+                            this.showParentClosedMessage();
+                        }
+                    },
+                    
+                    showParentClosedMessage: function() {
+                        if (document.querySelector('.parent-closed-message')) return;
+                        
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'parent-closed-message';
+                        messageDiv.style.cssText = \`
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            background: #ff9800;
+                            color: white;
+                            padding: 10px;
+                            text-align: center;
+                            z-index: 10000;
+                            font-family: Arial, sans-serif;
+                        \`;
+                        messageDiv.innerHTML = '⚠️ Live server connection lost - Editor window was closed';
+                        document.body.appendChild(messageDiv);
+                    },
+                    
+                    reload: function() {
+                        if (window.opener && window.opener.editor) {
+                            const content = window.opener.editor.getPageContent(this.currentPage);
+                            if (content) {
+                                const scrollPos = { x: window.scrollX, y: window.scrollY };
+                                try {
+                                    document.open();
+                                    document.write(content);
+                                    document.close();
+                                    
+                                    setTimeout(() => {
+                                        window.scrollTo(scrollPos.x, scrollPos.y);
+                                    }, 50);
+                                } catch (error) {
+                                    console.error('Reload error:', error);
+                                }
+                            }
+                        }
+                    },
+                    
+                    startAutoRefresh: function() {
+                        setInterval(() => {
+                            this.checkForUpdates();
+                        }, 1000);
                     }
-                }, true);
+                };
                 
-                // Handle browser back/forward
-                window.addEventListener('popstate', function(e) {
-                    if (e.state && e.state.page) {
-                        window.liveServer.navigate(e.state.page);
-                    }
-                });
-                
-                // Handle page refresh
-                window.addEventListener('beforeunload', function() {
-                    // Store current page in sessionStorage
-                    try {
-                        sessionStorage.setItem('liveServerCurrentPage', window.liveServer.currentPage);
-                    } catch(e) {
-                        // Ignore storage errors
-                    }
-                });
-                
-                // Restore page on load
-                try {
-                    const storedPage = sessionStorage.getItem('liveServerCurrentPage');
-                    if (storedPage && storedPage !== window.liveServer.currentPage) {
-                        window.liveServer.navigate(storedPage);
-                    }
-                } catch(e) {
-                    // Ignore storage errors
+                // Initialize when DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        window.EyeCodersLiveServer.init();
+                    });
+                } else {
+                    window.EyeCodersLiveServer.init();
                 }
-            });
+                
+                // For backward compatibility
+                window.liveServer = window.EyeCodersLiveServer;
+                
+            })();
         </script>
     `;
     
@@ -2814,23 +2894,20 @@ getFileMap() {
     }
     return fileMap;
 }
-
 getPageContent(pagePath) {
-    // Normalize the path
     let normalizedPath = pagePath;
     
-    // Remove leading slash if present
     if (normalizedPath.startsWith('/')) {
         normalizedPath = normalizedPath.substring(1);
     }
     
-    // Add .html extension if missing
-    if (!normalizedPath.endsWith('.html') && !normalizedPath.includes('.')) {
+    if (!normalizedPath.includes('.') && !normalizedPath.endsWith('.html')) {
         normalizedPath += '.html';
     }
     
-    console.log('Getting page content for:', normalizedPath);
+    console.log('🔍 Getting page content for:', normalizedPath);
     
+    // Try exact match first
     if (this.fileSystem.files.has(normalizedPath)) {
         const file = this.fileSystem.files.get(normalizedPath);
         if (file.type === 'html') {
@@ -2840,25 +2917,23 @@ getPageContent(pagePath) {
         }
     }
     
-    // Try to find the file with different path variations
+    // Try variations
     const variations = [
         normalizedPath,
         `pages/${normalizedPath}`,
         normalizedPath.replace('pages/', ''),
-        normalizedPath.replace('../', ''),
-        // Handle cases where path might have extra '../' or './'
         normalizedPath.replace(/^\.\.\//, '').replace(/^\.\//, ''),
-        // Try with pages prefix if not already there
-        normalizedPath.includes('/') ? normalizedPath : `pages/${normalizedPath}`
-    ];
+        normalizedPath.replace(/\/$/, '/index.html'),
+        normalizedPath.replace(/\.[^.]*$/, '') + '.html'
+    ].filter((v, i, arr) => v && arr.indexOf(v) === i);
     
-    console.log('Trying variations:', variations);
+    console.log('🔄 Trying variations:', variations);
     
     for (const variation of variations) {
         if (this.fileSystem.files.has(variation)) {
             const file = this.fileSystem.files.get(variation);
             if (file.type === 'html') {
-                console.log('Found file at:', variation);
+                console.log('✅ Found file at:', variation);
                 let content = this.processHTMLContent(file.content, variation);
                 content = this.addEnhancedLiveReloadScript(content);
                 return content;
@@ -2866,8 +2941,128 @@ getPageContent(pagePath) {
         }
     }
     
-    console.warn('Page not found:', pagePath, 'Variations tried:', variations);
-    return null;
+    console.warn('❌ Page not found:', pagePath);
+    return this.getNotFoundPageContent(pagePath);
+}
+
+getNotFoundPageContent(requestedPath) {
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <title>Page Not Found - Live Server</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px;
+                }
+                .error-container {
+                    text-align: center;
+                    padding: 3rem;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 15px;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    max-width: 600px;
+                }
+                .error-container h1 {
+                    margin-bottom: 1rem;
+                    font-size: 2.5rem;
+                }
+                .error-container p {
+                    font-size: 1.2rem;
+                    opacity: 0.9;
+                    margin-bottom: 2rem;
+                }
+                .back-btn {
+                    background: rgba(255, 255, 255, 0.2);
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    transition: all 0.3s ease;
+                    text-decoration: none;
+                    display: inline-block;
+                    margin: 0 10px;
+                }
+                .back-btn:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                    transform: translateY(-2px);
+                }
+                .file-list {
+                    margin-top: 2rem;
+                    text-align: left;
+                    background: rgba(0, 0, 0, 0.2);
+                    padding: 1.5rem;
+                    border-radius: 10px;
+                }
+                .file-list ul {
+                    list-style: none;
+                    padding: 0;
+                }
+                .file-list li {
+                    margin: 8px 0;
+                }
+                .file-list a {
+                    color: #87CEEB;
+                    text-decoration: none;
+                    padding: 5px 10px;
+                    border-radius: 5px;
+                    transition: background 0.2s ease;
+                }
+                .file-list a:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    text-decoration: underline;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <h1>📄 Page Not Found</h1>
+                <p>The page "<strong>${requestedPath}</strong>" could not be found.</p>
+                
+                <div>
+                    <a href="#" onclick="window.EyeCodersLiveServer.navigate('index.html')" class="back-btn">
+                        🏠 Back to Home
+                    </a>
+                    <a href="#" onclick="window.close()" class="back-btn">
+                        ❌ Close Window
+                    </a>
+                </div>
+                
+                <div class="file-list">
+                    <h3>📁 Available Pages:</h3>
+                    <ul>
+                        ${this.getAvailableHtmlFiles().map(file => 
+                            `<li>📄 <a href="#" onclick="window.EyeCodersLiveServer.navigate('${file}')">${file}</a></li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            </div>
+            ${this.addEnhancedLiveReloadScript('')}
+        </body>
+        </html>
+    `;
+}
+
+getAvailableHtmlFiles() {
+    const htmlFiles = [];
+    for (const [path, file] of this.fileSystem.files) {
+        if (file.type === 'html') {
+            htmlFiles.push(path);
+        }
+    }
+    return htmlFiles.sort();
 }
 
 
@@ -3415,239 +3610,302 @@ getCurrentPageFromUrl() {
     }
 
     getTemplateContent(fileType, fileName) {
-        const templates = {
-            'html': `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${fileName.replace('.html', '')}</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <header>
-        <nav>
-            <div class="logo">
-                <h1>My Website</h1>
-            </div>
-            <ul class="nav-links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="pages/about.html">About</a></li>
-                <li><a href="pages/contact.html">Contact</a></li>
-                <li><a href="pages/services.html">Services</a></li>
-            </ul>
-        </nav>
-    </header>
+    const templates = {
+        'js': `// JavaScript for ${fileName}
+// Eye Coders Club - Safe Code Template
+
+// Wrap everything in an IIFE to avoid global conflicts
+(function() {
+    'use strict';
     
-    <main>
-        <section class="page-header">
-            <div class="container">
-                <h2>Welcome to ${fileName.replace('.html', '')}</h2>
-                <p>Start building your amazing content here!</p>
-            </div>
-        </section>
+    console.log('${fileName} loaded successfully!');
+    
+    // Use a unique namespace for this file
+    const ${fileName.replace(/[^a-zA-Z0-9]/g, '_')}_Module = {
+        name: '${fileName}',
+        version: '1.0.0',
+        initialized: false,
         
-        <section class="page-content">
-            <div class="container">
-                <h2>Your Content Here</h2>
-                <p>Add your amazing content to this page.</p>
-            </div>
-        </section>
-    </main>
-    
-    <footer>
-        <div class="container">
-            <p>&copy; 2024 Eye Coders Club. All rights reserved.</p>
-        </div>
-    </footer>
-    
-    <script src="js/script.js"></script>
-</body>
-</html>`,
-            'css': `/* Styles for ${fileName} */
-
-/* Add your custom styles here */
-.custom-section {
-    padding: 2rem 0;
-    background: #f8f9fa;
-}
-
-.custom-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-/* Example styles */
-.highlight {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 1rem;
-    border-radius: 8px;
-}
-
-.card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
-}
-
-.button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.button:hover {
-    background: #5a67d8;
-    transform: translateY(-2px);
-}
-`,
-            'js': `// JavaScript for ${fileName}
-
-console.log('${fileName} loaded successfully!');
-
-// Add your JavaScript code here
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded for ${fileName}');
-    
-    // Initialize your functionality here
-    initializePage();
-});
-
-function initializePage() {
-    console.log('Initializing page functionality...');
-    
-    // Add event listeners
-    setupEventListeners();
-    
-    // Add animations or other functionality
-    setupAnimations();
-}
-
-function setupEventListeners() {
-    // Example: Add click listeners to buttons
-    const buttons = document.querySelectorAll('.button');
-    buttons.forEach(button => {
-        button.addEventListener('click', function() {
-            console.log('Button clicked:', this.textContent);
-            // Add your button functionality here
-        });
-    });
-}
-
-function setupAnimations() {
-    // Example: Add scroll animations
-    const elements = document.querySelectorAll('.card');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
+        // Initialize the module
+        init: function() {
+            if (this.initialized) return;
+            
+            console.log('Initializing', this.name);
+            this.setupEventListeners();
+            this.setupAnimations();
+            this.initialized = true;
+        },
+        
+        // Setup event listeners safely
+        setupEventListeners: function() {
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.bindEvents();
+                });
+            } else {
+                this.bindEvents();
             }
-        });
-    });
-    
-    elements.forEach(element => {
-        element.style.opacity = '0';
-        element.style.transform = 'translateY(20px)';
-        element.style.transition = 'all 0.6s ease';
-        observer.observe(element);
-    });
-}
-
-// Utility functions
-function showNotification(message, type = 'info') {
-    // Use the global notification function if available
-    if (window.showNotification) {
-        window.showNotification(message, type);
-    } else {
-        console.log(\`[\${type.toUpperCase()}] \${message}\`);
-    }
-}
-
-function getCurrentTime() {
-    return new Date().toLocaleTimeString();
-}
-
-console.log('${fileName} script initialized at', getCurrentTime());
-`,
-            'json': `{
-    "name": "${fileName.replace('.json', '')}",
-    "version": "1.0.0",
-    "description": "Configuration file for ${fileName.replace('.json', '')}",
-    "author": "Eye Coders Club",
-    "created": "${new Date().toISOString()}",
-    "settings": {
-        "theme": "default",
-        "language": "en",
-        "debug": false
-    },
-    "features": [
-        "feature1",
-        "feature2",
-        "feature3"
-    ]
-}`,
-            'md': `# ${fileName.replace('.md', '')}
-
-## Description
-
-This is a markdown file for ${fileName.replace('.md', '')}.
-
-## Features
-
-- Feature 1: Description of feature 1
-- Feature 2: Description of feature 2
-- Feature 3: Description of feature 3
-
-## Usage
-
-\`\`\`javascript
-// Example code usage
-console.log('Hello from ${fileName}');
-\`\`\`
-
-## Installation
-
-1. Step 1: First step description
-2. Step 2: Second step description
-3. Step 3: Third step description
-
-## Contributing
-
-Feel free to contribute to this project!
-
----
-
-*Created by Eye Coders Club - ${new Date().toLocaleDateString()}*
-`,
-            'txt': `This is a text file: ${fileName}
-
-Created on: ${new Date().toLocaleString()}
-Author: Eye Coders Club
-
-Add your content here.
-
-Instructions:
-1. Replace this content with your own text
-2. Use this file for notes, documentation, or plain text content
-3. Save regularly to keep your changes
-
----
-
-Happy coding!
-`
-        };
+        },
         
-        return templates[fileType] || '';
+        // Bind events to elements
+        bindEvents: function() {
+            // Example: Add click listeners to buttons
+            const buttons = document.querySelectorAll('button[data-action]');
+            buttons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const action = e.target.getAttribute('data-action');
+                    this.handleAction(action, e);
+                });
+            });
+            
+            // Example: Form submission handling
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    this.handleFormSubmit(e);
+                });
+            });
+        },
+        
+        // Handle button actions
+        handleAction: function(action, event) {
+            switch(action) {
+                case 'show-message':
+                    this.showCustomMessage();
+                    break;
+                case 'toggle-content':
+                    this.toggleContent(event.target);
+                    break;
+                default:
+                    console.log('Unknown action:', action);
+            }
+        },
+        
+        // Handle form submissions
+        handleFormSubmit: function(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            console.log('Form submitted:', Object.fromEntries(formData));
+            this.showCustomNotification('Form submitted successfully!', 'success');
+        },
+        
+        // Show custom message (safe from conflicts)
+        showCustomMessage: function() {
+            const messages = [
+                'Hello from ${fileName}! 👋',
+                'Your code is working perfectly! ✨',
+                'Keep building amazing things! 🚀',
+                'Eye Coders Club rocks! 🎯'
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            this.showCustomNotification(randomMessage, 'info');
+        },
+        
+        // Safe notification system (won't conflict with global ones)
+        showCustomNotification: function(message, type = 'info') {
+            // Remove existing notifications from this module
+            const existingNotifications = document.querySelectorAll('.custom-notification-' + this.name.replace(/[^a-zA-Z0-9]/g, '_'));
+            existingNotifications.forEach(notification => notification.remove());
+            
+            // Create notification
+            const notification = document.createElement('div');
+            const uniqueClass = 'custom-notification-' + this.name.replace(/[^a-zA-Z0-9]/g, '_');
+            notification.className = 'custom-notification ' + uniqueClass;
+            
+            // Style based on type
+            const styles = {
+                info: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);',
+                success: 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%);',
+                warning: 'background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);',
+                error: 'background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);'
+            };
+            
+            notification.innerHTML = \`
+                <div class="notification-content">
+                    <span>\${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+            \`;
+            
+            notification.style.cssText = \`
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                \${styles[type] || styles.info}
+                                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+                z-index: 1001;
+                animation: slideInRight 0.3s ease;
+                max-width: 350px;
+                font-family: Arial, sans-serif;
+            \`;
+            
+            // Add animation styles if not already present
+            this.ensureAnimationStyles();
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 4000);
+        },
+        
+        // Ensure animation styles are loaded
+        ensureAnimationStyles: function() {
+            const styleId = 'custom-animations-' + this.name.replace(/[^a-zA-Z0-9]/g, '_');
+            if (!document.querySelector('#' + styleId)) {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.textContent = \`
+                    @keyframes slideInRight {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOutRight {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                    .custom-notification .notification-content {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 15px;
+                    }
+                    .custom-notification .notification-content button {
+                        background: rgba(255, 255, 255, 0.2);
+                        border: none;
+                        color: white;
+                        width: 25px;
+                        height: 25px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        padding: 0;
+                        transition: background 0.2s ease;
+                    }
+                    .custom-notification .notification-content button:hover {
+                        background: rgba(255, 255, 255, 0.3);
+                    }
+                \`;
+                document.head.appendChild(style);
+            }
+        },
+        
+        // Setup animations safely
+        setupAnimations: function() {
+            // Animate elements with specific data attributes
+            const animatedElements = document.querySelectorAll('[data-animate]');
+            animatedElements.forEach((element, index) => {
+                const animationType = element.getAttribute('data-animate');
+                this.animateElement(element, animationType, index * 100);
+            });
+        },
+        
+        // Animate individual elements
+        animateElement: function(element, type, delay = 0) {
+            setTimeout(() => {
+                switch(type) {
+                    case 'fade-in':
+                        element.style.opacity = '0';
+                        element.style.transform = 'translateY(20px)';
+                        element.style.transition = 'all 0.6s ease';
+                        setTimeout(() => {
+                            element.style.opacity = '1';
+                            element.style.transform = 'translateY(0)';
+                        }, 50);
+                        break;
+                    case 'slide-in':
+                        element.style.transform = 'translateX(-20px)';
+                        element.style.opacity = '0';
+                        element.style.transition = 'all 0.5s ease';
+                        setTimeout(() => {
+                            element.style.transform = 'translateX(0)';
+                            element.style.opacity = '1';
+                        }, 50);
+                        break;
+                }
+            }, delay);
+        },
+        
+        // Toggle content visibility
+        toggleContent: function(trigger) {
+            const target = trigger.getAttribute('data-target');
+            const targetElement = document.querySelector(target);
+            
+            if (targetElement) {
+                const isHidden = targetElement.style.display === 'none';
+                targetElement.style.display = isHidden ? 'block' : 'none';
+                trigger.textContent = isHidden ? 'Hide' : 'Show';
+            }
+        },
+        
+        // Utility functions
+        utils: {
+            getCurrentTime: function() {
+                return new Date().toLocaleTimeString();
+            },
+            
+            formatDate: function(date) {
+                return new Date(date).toLocaleDateString();
+            },
+            
+            debounce: function(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+            
+            log: function(message) {
+                console.log(\`[\${this.getCurrentTime()}] \${message}\`);
+            }
+        }
+    };
+    
+    // Initialize the module when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            ${fileName.replace(/[^a-zA-Z0-9]/g, '_')}_Module.init();
+        });
+    } else {
+        ${fileName.replace(/[^a-zA-Z0-9]/g, '_')}_Module.init();
     }
+    
+    // Expose module globally if needed (optional)
+    window.${fileName.replace(/[^a-zA-Z0-9]/g, '_')}_Module = ${fileName.replace(/[^a-zA-Z0-9]/g, '_')}_Module;
+    
+})();
+
+// Example usage in HTML:
+// <button data-action="show-message">Show Message</button>
+// <button data-action="toggle-content" data-target="#content">Toggle Content</button>
+// <div data-animate="fade-in">This will fade in</div>
+// <div data-animate="slide-in">This will slide in</div>
+`,
+        // ... other templates remain the same
+    };
+    
+    return templates[fileType] || '';
+}
+
 
     deleteFile(path) {
         if (!confirm(`Are you sure you want to delete "${path.split('/').pop()}"?`)) {
