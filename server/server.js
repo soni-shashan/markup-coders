@@ -35,7 +35,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret-key';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/eyecoders';
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-    console.warn('Warning: Missing Google OAuth credentials. Google OAuth routes will be disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env to enable.');
+    console.error('Missing Google OAuth credentials. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env file');
+    process.exit(1);
 }
 
 // Middleware
@@ -379,15 +380,8 @@ const upload = multer({
 });
 
 // Helper function for creating submission files
-// options: { skipPdf: boolean }
-async function createSubmissionFiles(submission, outputDir, options = {}) {
+async function createSubmissionFiles(submission, outputDir) {
     try {
-        // ensure output directory exists
-        if (!fs.existsSync(outputDir)) {
-            await mkdir(outputDir, { recursive: true });
-        }
-        const safeHtml = submission.htmlCode || '';
-
         const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -397,7 +391,7 @@ async function createSubmissionFiles(submission, outputDir, options = {}) {
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    ${safeHtml.replace(/<html[^>]*>|<\/html>|<head[^>]*>|<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')}
+    ${submission.htmlCode.replace(/<html[^>]*>|<\/html>|<head[^>]*>|<\/head>|<body[^>]*>|<\/body>|<!DOCTYPE[^>]*>/gi, '')}
     <script src="script.js"></script>
 </body>
 </html>`;
@@ -405,33 +399,30 @@ async function createSubmissionFiles(submission, outputDir, options = {}) {
         await writeFile(path.join(outputDir, 'index.html'), htmlContent);
         await writeFile(path.join(outputDir, 'style.css'), submission.cssCode || '');
         await writeFile(path.join(outputDir, 'script.js'), submission.jsCode || '');
-
-        // Optionally skip PDF generation for faster bulk zips
-        if (!options.skipPdf) {
-            let browser;
-            try {
-                browser = await puppeteer.launch({ 
-                    headless: 'new',
-                    args: ['--no-sandbox', '--disable-setuid-sandbox']
-                });
-                const page = await browser.newPage();
-                await page.setContent(htmlContent);
-                await page.addStyleTag({ content: submission.cssCode || '' });
-                
-                const pdfBuffer = await page.pdf({ 
-                    format: 'A4',
-                    printBackground: true,
-                    margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-                });
-                
-                await writeFile(path.join(outputDir, 'output.pdf'), pdfBuffer);
-            } catch (pdfError) {
-                console.error(`PDF generation failed for ${submission.teamName}:`, pdfError);
-                await writeFile(path.join(outputDir, 'output_error.txt'), 'PDF generation failed: ' + pdfError.message);
-            } finally {
-                if (browser) {
-                    await browser.close();
-                }
+        
+        let browser;
+        try {
+            browser = await puppeteer.launch({ 
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+            await page.setContent(htmlContent);
+            await page.addStyleTag({ content: submission.cssCode || '' });
+            
+            const pdfBuffer = await page.pdf({ 
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+            });
+            
+            await writeFile(path.join(outputDir, 'output.pdf'), pdfBuffer);
+        } catch (pdfError) {
+            console.error(`PDF generation failed for ${submission.teamName}:`, pdfError);
+            await writeFile(path.join(outputDir, 'output_error.txt'), 'PDF generation failed: ' + pdfError.message);
+        } finally {
+            if (browser) {
+                await browser.close();
             }
         }
         
@@ -1109,16 +1100,6 @@ app.get('/api/admin/download-all-teams', async (req, res) => {
     console.log('Download all teams request received');
     
     try {
-        // Check MongoDB connection state before proceeding
-        // readyState: 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-        if (mongoose.connection.readyState !== 1) {
-            console.error('MongoDB not connected (state:', mongoose.connection.readyState + ')');
-            return res.status(503).json({
-                success: false,
-                message: 'MongoDB is not connected. Please ensure the database is running.',
-                connectionState: mongoose.connection.readyState
-            });
-        }
         const teams = await Team.find();
         const allSubmissions = await Submission.find().sort({ submittedAt: -1 });
         
@@ -1134,82 +1115,66 @@ app.get('/api/admin/download-all-teams', async (req, res) => {
                 });
             }
         }
-
+        
         if (teamsWithSubmissions.length === 0) {
             return res.status(404).json({ 
                 success: false, 
                 message: 'No teams with submissions found' 
             });
         }
-
+        
         console.log(`Processing ${teamsWithSubmissions.length} teams with submissions`);
-
+        
         const zipFileName = `All_Teams_Submissions_${new Date().toISOString().split('T')[0]}.zip`;
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="${zipFileName}"`);
-
-        const archive = archiver('zip', { zlib: { level: 1 } });
-
+        
+        const archive = archiver('zip', { 
+            zlib: { level: 1 },
+            store: true
+        });
+        
         archive.on('error', (err) => {
             console.error('Archive error:', err);
             if (!res.headersSent) {
                 res.status(500).end();
             }
         });
-
+        
         archive.on('warning', (err) => {
             console.warn('Archive warning:', err);
         });
-
+        
         archive.pipe(res);
-
-        // Create a temp root directory to hold per-team folders
-        const rootTempDir = path.join(__dirname, 'temp', `all_teams_${Date.now()}`);
-        await mkdir(rootTempDir, { recursive: true });
-
-        try {
-            for (const teamData of teamsWithSubmissions) {
-                const { team, submission } = teamData;
-                const teamFolderName = sanitizeFileName(team.teamName);
-                const teamTempDir = path.join(rootTempDir, teamFolderName);
-
-                console.log(`Creating temp folder for team: ${team.teamName} -> ${teamTempDir}`);
-
-                try {
-                    // create files on disk (skip PDF for bulk to speed up)
-                    await createSubmissionFiles(submission, teamTempDir, { skipPdf: true });
-
-                    // also write complete.html and info.txt
-                    const completeHtml = createCompleteHtmlContent(submission);
-                    await writeFile(path.join(teamTempDir, 'complete.html'), completeHtml);
-                    const infoContent = createInfoContent(submission);
-                    await writeFile(path.join(teamTempDir, 'info.txt'), infoContent);
-
-                    // add the team's folder to the archive under its folder name
-                    archive.directory(teamTempDir, teamFolderName);
-
-                } catch (teamError) {
-                    console.error(`Error preparing files for team ${team.teamName}:`, teamError);
-                    // add an error file into the archive for this team
-                    archive.append(`Error processing team: ${teamError.message}`, { name: `${teamFolderName}/error.txt` });
-                }
+        
+        for (const teamData of teamsWithSubmissions) {
+            const { team, submission } = teamData;
+            const teamFolderName = sanitizeFileName(team.teamName);
+            
+            console.log(`Adding files for team: ${team.teamName}`);
+            
+            try {
+                const htmlContent = createCompleteHtmlContent(submission);
+                
+                archive.append(htmlContent, { name: `${teamFolderName}/complete.html` });
+                archive.append(submission.htmlCode || '', { name: `${teamFolderName}/index.html` });
+                archive.append(submission.cssCode || '', { name: `${teamFolderName}/style.css` });
+                archive.append(submission.jsCode || '', { name: `${teamFolderName}/script.js` });
+                
+                const infoContent = createInfoContent(submission);
+                archive.append(infoContent, { name: `${teamFolderName}/info.txt` });
+                
+            } catch (teamError) {
+                console.error(`Error processing team ${team.teamName}:`, teamError);
+                archive.append(`Error processing team: ${teamError.message}`, { 
+                    name: `${teamFolderName}/error.txt` 
+                });
             }
-
-            console.log('Finalizing archive...');
-            await archive.finalize();
-            console.log('Archive sent successfully');
-
-        } finally {
-            // Clean up temp root directory a few seconds after response finished
-            setTimeout(() => {
-                try {
-                    fs.rmSync(rootTempDir, { recursive: true, force: true });
-                    console.log('Cleaned up temp directory:', rootTempDir);
-                } catch (cleanupErr) {
-                    console.warn('Failed to cleanup temp directory:', cleanupErr && cleanupErr.message ? cleanupErr.message : cleanupErr);
-                }
-            }, 5000);
         }
+        
+        console.log('Finalizing archive...');
+        await archive.finalize();
+        console.log('Archive sent successfully');
         
     } catch (error) {
         console.error('Download all teams error:', error);
