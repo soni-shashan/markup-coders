@@ -1848,60 +1848,66 @@ showNewFolderModal(parentFolder = null) {
 
 
     createFolderElement(folderName, files) {
-        const folderContainer = document.createElement('div');
-        
-        const folderItem = document.createElement('div');
-        folderItem.className = 'folder-item expanded';
-        folderItem.dataset.folder = folderName;
-        
-        folderItem.innerHTML = `
-            <i class="fas fa-folder-open"></i>
-            <span>${folderName}</span>
-            <div class="file-actions">
-                <button class="file-action-btn" title="New File in Folder" onclick="editor.showNewFileModal('${folderName}')">
-                    <i class="fas fa-file-plus"></i>
-                </button>
-                <button class="file-action-btn" title="Delete Folder" onclick="editor.deleteFolder('${folderName}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
+    const folderContainer = document.createElement('div');
+    
+    const folderItem = document.createElement('div');
+    folderItem.className = 'folder-item expanded';
+    folderItem.dataset.folder = folderName;
+    
+    folderItem.innerHTML = `
+        <i class="fas fa-folder-open"></i>
+        <span>${folderName}</span>
+        <div class="file-actions">
+            <button class="file-action-btn" title="New File in ${folderName}" onclick="event.stopPropagation(); editor.showNewFileModal('${folderName}')">
+                <i class="fas fa-file-plus"></i>
+            </button>
+            <button class="file-action-btn" title="New Folder in ${folderName}" onclick="event.stopPropagation(); editor.showNewFolderModal('${folderName}')">
+                <i class="fas fa-folder-plus"></i>
+            </button>
+            <button class="file-action-btn" title="Delete Folder" onclick="event.stopPropagation(); editor.deleteFolder('${folderName}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
 
-        const folderContents = document.createElement('div');
-        folderContents.className = 'folder-contents';
+    const folderContents = document.createElement('div');
+    folderContents.className = 'folder-contents';
 
-        files.forEach(({ path, file }) => {
-            folderContents.appendChild(this.createFileElement(path, file));
-        });
+    files.forEach(({ path, file }) => {
+        folderContents.appendChild(this.createFileElement(path, file));
+    });
 
-        folderItem.addEventListener('click', (e) => {
-            if (!e.target.closest('.file-actions')) {
-                e.stopPropagation();
-                folderItem.classList.toggle('expanded');
-                folderItem.classList.toggle('collapsed');
-                
-                const icon = folderItem.querySelector('i');
-                if (folderItem.classList.contains('expanded')) {
-                    icon.className = 'fas fa-folder-open';
-                    folderContents.style.display = 'block';
-                } else {
-                    icon.className = 'fas fa-folder';
-                    folderContents.style.display = 'none';
-                }
+    // Folder click handler (for expand/collapse)
+    folderItem.addEventListener('click', (e) => {
+        // Only toggle if not clicking on action buttons
+        if (!e.target.closest('.file-actions')) {
+            e.stopPropagation();
+            folderItem.classList.toggle('expanded');
+            folderItem.classList.toggle('collapsed');
+            
+            const icon = folderItem.querySelector('i');
+            if (folderItem.classList.contains('expanded')) {
+                icon.className = 'fas fa-folder-open';
+                folderContents.style.display = 'block';
+            } else {
+                icon.className = 'fas fa-folder';
+                folderContents.style.display = 'none';
             }
-        });
+        }
+    });
 
-        // Right-click context menu for folders
-        folderItem.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            this.showFileContextMenu(e, folderName, true);
-        });
+    // Right-click context menu for folders
+    folderItem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.showFileContextMenu(e, folderName, true);
+    });
 
-        folderContainer.appendChild(folderItem);
-        folderContainer.appendChild(folderContents);
+    folderContainer.appendChild(folderItem);
+    folderContainer.appendChild(folderContents);
 
-        return folderContainer;
-    }
+    return folderContainer;
+}
+
 
 
     getFileIcon(type) {

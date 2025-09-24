@@ -1218,3 +1218,109 @@ body.monokai-theme .login-prompt {
 .folder-contents .folder-contents .folder-contents {
     padding-left: 12px;
 }
+
+/* Enhanced Folder Actions */
+.folder-item {
+    position: relative;
+    user-select: none;
+    padding: 4px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.folder-item:hover {
+    background: var(--hover-bg);
+}
+
+.folder-item .file-actions {
+    display: none;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.folder-item:hover .file-actions {
+    display: flex;
+}
+
+/* Make folder action buttons more visible */
+.folder-item .file-actions .file-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.folder-item .file-actions .file-action-btn:hover {
+    color: var(--text-primary);
+    background: var(--hover-bg);
+}
+
+/* Different colors for different actions */
+.folder-item .file-actions .file-action-btn:first-child {
+    color: var(--accent-blue);
+}
+
+.folder-item .file-actions .file-action-btn:first-child:hover {
+    background: rgba(102, 126, 234, 0.2);
+    color: var(--accent-blue);
+}
+
+.folder-item .file-actions .file-action-btn:nth-child(2) {
+    color: #28a745;
+}
+
+.folder-item .file-actions .file-action-btn:nth-child(2):hover {
+    background: rgba(40, 167, 69, 0.2);
+    color: #28a745;
+}
+
+.folder-item .file-actions .file-action-btn:last-child {
+    color: #dc3545;
+}
+
+.folder-item .file-actions .file-action-btn:last-child:hover {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+}
+
+/* Folder icon and text layout */
+.folder-item > i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+.folder-item > span {
+    flex: 1;
+}
+
+/* Tooltip enhancement */
+.file-action-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+}
