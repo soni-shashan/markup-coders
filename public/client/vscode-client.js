@@ -2216,12 +2216,11 @@ showNewFolderModal(parentFolder = null) {
         this.updateStatusBar();
     }
 
-    closeTab(path) {
+    async closeTab(path) {
         const tabInfo = this.openTabs.get(path);
         if (tabInfo && tabInfo.modified) {
-            if (!confirm(`File "${path.split('/').pop()}" has unsaved changes. Close anyway?`)) {
-                return;
-            }
+            const ok = await this.showConfirm(`File "${path.split('/').pop()}" has unsaved changes. Close anyway?`);
+            if (!ok) return;
         }
         
         this.openTabs.delete(path);
@@ -3515,11 +3514,16 @@ getCurrentPageFromUrl() {
 }
 
 
+    
+
     createNewFile(fileName) {
     if (!fileName.trim()) {
         this.showAlert('Please enter a file name', 'error');
         return;
     }
+
+    console.log('createNewFile called with:', fileName);
+    console.log('selectedFolder:', this.selectedFolder);
 
     console.log('createNewFile called with:', fileName);
     console.log('selectedFolder:', this.selectedFolder);
@@ -3569,6 +3573,83 @@ getCurrentPageFromUrl() {
     
     console.log('New file created:', uniqueFileName);
 }
+
+
+    // Modal-based confirm/prompt helpers (SEB-friendly)
+    showConfirm(message, options = { confirmText: 'OK', cancelText: 'Cancel' }) {
+        return new Promise(resolve => {
+            // Create modal elements
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:10050;';
+
+            const modal = document.createElement('div');
+            modal.className = 'confirm-modal';
+            modal.style.cssText = 'background:white;padding:20px;border-radius:8px;max-width:400px;width:90%;box-shadow:0 6px 30px rgba(0,0,0,0.25);color:#222;font-family:Segoe UI, Arial, sans-serif;';
+
+            modal.innerHTML = `
+                <div style="margin-bottom:12px">${message}</div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="confirm-cancel" style="padding:8px 12px;">${options.cancelText}</button>
+                    <button class="confirm-ok" style="padding:8px 12px;background:#0078d4;color:white;border:none;border-radius:4px;">${options.confirmText}</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const cleanup = (result) => {
+                overlay.remove();
+                resolve(result);
+            };
+
+            modal.querySelector('.confirm-ok').addEventListener('click', () => cleanup(true));
+            modal.querySelector('.confirm-cancel').addEventListener('click', () => cleanup(false));
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) cleanup(false);
+            });
+        });
+    }
+
+    showPrompt(message, defaultValue = '') {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:10050;';
+
+            const modal = document.createElement('div');
+            modal.className = 'prompt-modal';
+            modal.style.cssText = 'background:white;padding:16px;border-radius:8px;max-width:480px;width:90%;box-shadow:0 6px 30px rgba(0,0,0,0.25);color:#222;font-family:Segoe UI, Arial, sans-serif;';
+
+            modal.innerHTML = `
+                <div style="margin-bottom:8px">${message}</div>
+                <input type="text" class="prompt-input" value="${defaultValue}" style="width:100%;padding:8px;margin-bottom:12px;border:1px solid #ccc;border-radius:4px;"/>
+                <div style="display:flex;justify-content:flex-end;gap:8px;">
+                    <button class="prompt-cancel" style="padding:8px 12px;">Cancel</button>
+                    <button class="prompt-ok" style="padding:8px 12px;background:#0078d4;color:white;border:none;border-radius:4px;">OK</button>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            const input = modal.querySelector('.prompt-input');
+            input.focus();
+
+            const cleanup = (result) => {
+                overlay.remove();
+                resolve(result);
+            };
+
+            modal.querySelector('.prompt-ok').addEventListener('click', () => cleanup(input.value));
+            modal.querySelector('.prompt-cancel').addEventListener('click', () => cleanup(null));
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) cleanup(null);
+            });
+        });
+    }
 
 
 
@@ -3992,70 +4073,74 @@ getCurrentPageFromUrl() {
 
 
     deleteFile(path) {
-        if (!confirm(`Are you sure you want to delete "${path.split('/').pop()}"?`)) {
-            return;
-        }
-        
-        this.fileSystem.files.delete(path);
-        this.openTabs.delete(path);
-        
-        if (this.activeTab === path) {
-            const remainingTabs = Array.from(this.openTabs.keys());
-            this.activeTab = remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : null;
-        }
-        
-        this.renderFileTree();
-        this.renderTabs();
-        this.renderEditor();
-        this.updateStatusBar();
-        
-        this.showAlert(`File "${path.split('/').pop()}" deleted successfully!`, 'success');
-        
-        console.log('File deleted:', path);
-    }
+        // Use modal confirm for SEB compatibility
+        return (async () => {
+            const ok = await this.showConfirm(`Are you sure you want to delete "${path.split('/').pop()}"?`);
+            if (!ok) return;
 
-    deleteFolder(folderName) {
-        if (!confirm(`Are you sure you want to delete folder "${folderName}" and all its contents?`)) {
-            return;
-        }
-        
-        // Delete all files in the folder
-        const filesToDelete = [];
-        for (const [path, file] of this.fileSystem.files) {
-            if (path.startsWith(folderName + '/')) {
-                filesToDelete.push(path);
-            }
-        }
-        
-        filesToDelete.forEach(path => {
             this.fileSystem.files.delete(path);
             this.openTabs.delete(path);
-            
+
             if (this.activeTab === path) {
                 const remainingTabs = Array.from(this.openTabs.keys());
                 this.activeTab = remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : null;
             }
-        });
-        
-        this.fileSystem.folders.delete(folderName);
-        
-        this.renderFileTree();
-        this.renderTabs();
-        this.renderEditor();
-        this.updateStatusBar();
-        
-        this.showAlert(`Folder "${folderName}" and ${filesToDelete.length} files deleted successfully!`, 'success');
-        
-        console.log('Folder deleted:', folderName, 'with', filesToDelete.length, 'files');
+
+            this.renderFileTree();
+            this.renderTabs();
+            this.renderEditor();
+            this.updateStatusBar();
+
+            this.showAlert(`File "${path.split('/').pop()}" deleted successfully!`, 'success');
+
+            console.log('File deleted:', path);
+        })();
+    }
+
+    deleteFolder(folderName) {
+        return (async () => {
+            const ok = await this.showConfirm(`Are you sure you want to delete folder "${folderName}" and all its contents?`);
+            if (!ok) return;
+
+            // Delete all files in the folder
+            const filesToDelete = [];
+            for (const [path, file] of this.fileSystem.files) {
+                if (path.startsWith(folderName + '/')) {
+                    filesToDelete.push(path);
+                }
+            }
+
+            filesToDelete.forEach(path => {
+                this.fileSystem.files.delete(path);
+                this.openTabs.delete(path);
+
+                if (this.activeTab === path) {
+                    const remainingTabs = Array.from(this.openTabs.keys());
+                    this.activeTab = remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1] : null;
+                }
+            });
+
+            this.fileSystem.folders.delete(folderName);
+
+            this.renderFileTree();
+            this.renderTabs();
+            this.renderEditor();
+            this.updateStatusBar();
+
+            this.showAlert(`Folder "${folderName}" and ${filesToDelete.length} files deleted successfully!`, 'success');
+
+            console.log('Folder deleted:', folderName, 'with', filesToDelete.length, 'files');
+        })();
     }
 
     renameFile(path) {
         const currentName = path.split('/').pop();
-        const newName = prompt(`Rename "${currentName}" to:`, currentName);
-        
-        if (!newName || newName === currentName) {
-            return;
-        }
+        return (async () => {
+            const newName = await this.showPrompt(`Rename "${currentName}" to:`, currentName);
+
+            if (!newName || newName === currentName) {
+                return;
+            }
         
         const newPath = path.replace(currentName, newName);
         
@@ -4064,31 +4149,32 @@ getCurrentPageFromUrl() {
             return;
         }
         
-        // Move file data
-        const fileData = this.fileSystem.files.get(path);
-        this.fileSystem.files.set(newPath, fileData);
-        this.fileSystem.files.delete(path);
-        
-        // Update open tabs
-        if (this.openTabs.has(path)) {
-            const tabInfo = this.openTabs.get(path);
-            this.openTabs.set(newPath, tabInfo);
-            this.openTabs.delete(path);
-        }
-        
-        // Update active tab
-        if (this.activeTab === path) {
-            this.activeTab = newPath;
-        }
-        
-        this.renderFileTree();
-        this.renderTabs();
-        this.renderEditor();
-        this.updateStatusBar();
-        
-        this.showAlert(`File renamed to "${newName}" successfully!`, 'success');
-        
-        console.log('File renamed:', path, '->', newPath);
+            // Move file data
+            const fileData = this.fileSystem.files.get(path);
+            this.fileSystem.files.set(newPath, fileData);
+            this.fileSystem.files.delete(path);
+
+            // Update open tabs
+            if (this.openTabs.has(path)) {
+                const tabInfo = this.openTabs.get(path);
+                this.openTabs.set(newPath, tabInfo);
+                this.openTabs.delete(path);
+            }
+
+            // Update active tab
+            if (this.activeTab === path) {
+                this.activeTab = newPath;
+            }
+
+            this.renderFileTree();
+            this.renderTabs();
+            this.renderEditor();
+            this.updateStatusBar();
+
+            this.showAlert(`File renamed to "${newName}" successfully!`, 'success');
+
+            console.log('File renamed:', path, '->', newPath);
+        })();
     }
 
     performSearch(query) {
@@ -4382,10 +4468,8 @@ getCurrentPageFromUrl() {
             this.showAlert('No team information found. Cannot submit code.', 'error');
             return;
         }
-        
-        if (!confirm('Are you sure you want to submit your project? This will save all your files and create a submission.')) {
-            return;
-        }
+        const okSubmit = await this.showConfirm('Are you sure you want to submit your project? This will save all your files and create a submission.');
+        if (!okSubmit) return;
         
         try {
             const submitBtn = document.getElementById('submitBtn');

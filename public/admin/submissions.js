@@ -242,7 +242,22 @@ async function downloadAllTeams() {
             return;
         }
         
-        if (!confirm(`This will download the latest submission from ${teamsWithSubmissions} teams. Continue?`)) {
+        // Use SEB-safe modal confirm if available (from opener/editor), else fallback to native confirm
+        let proceed = true;
+        try {
+            if (window.opener && window.opener.editor && typeof window.opener.editor.showConfirm === 'function') {
+                proceed = await window.opener.editor.showConfirm(`This will download the latest submission from ${teamsWithSubmissions} teams. Continue?`);
+            } else if (typeof showConfirm === 'function') {
+                proceed = await showConfirm(`This will download the latest submission from ${teamsWithSubmissions} teams. Continue?`);
+            } else {
+                proceed = confirm(`This will download the latest submission from ${teamsWithSubmissions} teams. Continue?`);
+            }
+        } catch (e) {
+            // If modal fails for any reason, fallback to native confirm
+            proceed = confirm(`This will download the latest submission from ${teamsWithSubmissions} teams. Continue?`);
+        }
+
+        if (!proceed) {
             return;
         }
         
