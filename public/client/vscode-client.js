@@ -1812,6 +1812,9 @@ console.log('📝 Script.js loaded successfully!');`,
 
 showNewFileModal(folderPath = null) {
     this.selectedFolder = folderPath;
+    console.log('showNewFileModal called with folderPath:', folderPath);
+    console.log('selectedFolder set to:', this.selectedFolder);
+    
     const modal = document.getElementById('newFileModal');
     const input = document.getElementById('newFileName');
     
@@ -1827,6 +1830,7 @@ showNewFileModal(folderPath = null) {
     input.focus();
     input.value = ''; // Clear previous value
 }
+
 
 showNewFolderModal(parentFolder = null) {
     this.selectedFolder = parentFolder;
@@ -3062,35 +3066,62 @@ getPageContent(pagePath) {
     const newFileModal = document.getElementById('newFileModal');
     const newFileNameInput = document.getElementById('newFileName');
     
-    newFileModal.querySelector('.close-modal').addEventListener('click', () => {
+    // Remove existing event listeners to avoid duplicates
+    const closeBtn = newFileModal.querySelector('.close-modal');
+    const cancelBtn = newFileModal.querySelector('.btn-cancel');
+    const createBtn = newFileModal.querySelector('.btn-create');
+    
+    // Clone buttons to remove all existing event listeners
+    const newCloseBtn = closeBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    const newCreateBtn = createBtn.cloneNode(true);
+    
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    createBtn.parentNode.replaceChild(newCreateBtn, createBtn);
+    
+    // Add new event listeners
+    newCloseBtn.addEventListener('click', () => {
+        console.log('Close button clicked, selectedFolder was:', this.selectedFolder);
         newFileModal.style.display = 'none';
         this.selectedFolder = null;
-        console.log('Modal closed, selectedFolder reset');
+        console.log('Modal closed, selectedFolder reset to:', this.selectedFolder);
     });
     
-    newFileModal.querySelector('.btn-cancel').addEventListener('click', () => {
+    newCancelBtn.addEventListener('click', () => {
+        console.log('Cancel button clicked, selectedFolder was:', this.selectedFolder);
         newFileModal.style.display = 'none';
         this.selectedFolder = null;
-        console.log('Modal cancelled, selectedFolder reset');
+        console.log('Modal cancelled, selectedFolder reset to:', this.selectedFolder);
     });
     
-     newFileModal.querySelector('.btn-create').addEventListener('click', () => {
+    newCreateBtn.addEventListener('click', () => {
         const fileName = newFileNameInput.value.trim();
-        console.log('Create button clicked, fileName:', fileName, 'selectedFolder:', this.selectedFolder);
+        console.log('Create button clicked - fileName:', fileName, 'selectedFolder:', this.selectedFolder);
+        
         if (fileName) {
+            // Don't reset selectedFolder here - let createNewFile handle it
             this.createNewFile(fileName);
             newFileModal.style.display = 'none';
             newFileNameInput.value = '';
+        } else {
+            this.showAlert('Please enter a file name', 'error');
         }
     });
     
     // Template buttons - update filename based on selected folder
     document.querySelectorAll('.template-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const template = btn.dataset.template;
+        // Remove existing listeners by cloning
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        newBtn.addEventListener('click', () => {
+            const template = newBtn.dataset.template;
             const extension = template === 'html' ? '.html' : template === 'css' ? '.css' : '.js';
             const baseName = template === 'html' ? 'page' : template === 'css' ? 'styles' : 'script';
             let fileName = baseName + extension;
+            
+            console.log('Template button clicked, selectedFolder:', this.selectedFolder);
             
             // Suggest appropriate filename based on folder
             if (this.selectedFolder) {
@@ -3103,7 +3134,8 @@ getPageContent(pagePath) {
                 }
             }
             
-            newFileNameInput.value = this.getUniqueFileName(this.selectedFolder ? `${this.selectedFolder}/${fileName}` : fileName).split('/').pop();
+            const uniqueName = this.getUniqueFileName(this.selectedFolder ? `${this.selectedFolder}/${fileName}` : fileName);
+            newFileNameInput.value = uniqueName.split('/').pop();
         });
     });
     
@@ -3111,17 +3143,30 @@ getPageContent(pagePath) {
     const newFolderModal = document.getElementById('newFolderModal');
     const newFolderNameInput = document.getElementById('newFolderName');
     
-    newFolderModal.querySelector('.close-modal').addEventListener('click', () => {
+    // Same approach for folder modal
+    const folderCloseBtn = newFolderModal.querySelector('.close-modal');
+    const folderCancelBtn = newFolderModal.querySelector('.btn-cancel');
+    const folderCreateBtn = newFolderModal.querySelector('.btn-create');
+    
+    const newFolderCloseBtn = folderCloseBtn.cloneNode(true);
+    const newFolderCancelBtn = folderCancelBtn.cloneNode(true);
+    const newFolderCreateBtn = folderCreateBtn.cloneNode(true);
+    
+    folderCloseBtn.parentNode.replaceChild(newFolderCloseBtn, folderCloseBtn);
+    folderCancelBtn.parentNode.replaceChild(newFolderCancelBtn, folderCancelBtn);
+    folderCreateBtn.parentNode.replaceChild(newFolderCreateBtn, folderCreateBtn);
+    
+    newFolderCloseBtn.addEventListener('click', () => {
         newFolderModal.style.display = 'none';
         this.selectedFolder = null;
     });
     
-    newFolderModal.querySelector('.btn-cancel').addEventListener('click', () => {
+    newFolderCancelBtn.addEventListener('click', () => {
         newFolderModal.style.display = 'none';
         this.selectedFolder = null;
     });
     
-    newFolderModal.querySelector('.btn-create').addEventListener('click', () => {
+    newFolderCreateBtn.addEventListener('click', () => {
         const folderName = newFolderNameInput.value.trim();
         if (folderName) {
             this.createNewFolder(folderName);
@@ -3132,29 +3177,35 @@ getPageContent(pagePath) {
     
     // Shortcuts Modal
     const shortcutsModal = document.getElementById('shortcutsModal');
-    shortcutsModal.querySelector('.close-modal').addEventListener('click', () => {
+    const shortcutsCloseBtn = shortcutsModal.querySelector('.close-modal');
+    const newShortcutsCloseBtn = shortcutsCloseBtn.cloneNode(true);
+    shortcutsCloseBtn.parentNode.replaceChild(newShortcutsCloseBtn, shortcutsCloseBtn);
+    
+    newShortcutsCloseBtn.addEventListener('click', () => {
         shortcutsModal.style.display = 'none';
     });
     
     // Enter key support
     newFileNameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            newFileModal.querySelector('.btn-create').click();
+            newCreateBtn.click();
         }
     });
     
     newFolderNameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            newFolderModal.querySelector('.btn-create').click();
+            newFolderCreateBtn.click();
         }
     });
 
-    // Close modals when clicking outside
+    // Close modals when clicking outside - but preserve selectedFolder until create/cancel
     [newFileModal, newFolderModal, shortcutsModal].forEach(modal => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.style.display = 'none';
-                this.selectedFolder = null;
+                if (modal === newFileModal || modal === newFolderModal) {
+                    this.selectedFolder = null;
+                }
             }
         });
     });
