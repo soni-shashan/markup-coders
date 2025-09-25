@@ -4719,6 +4719,7 @@ getCurrentPageFromUrl() {
         } else if (status === 'changed') {
             indicator.className = 'auto-save-indicator';
             indicator.innerHTML = '<span class="save-icon">📝</span><span class="save-text">Changes detected</span>';
+            this.saveAllFiles();
         }
         
         setTimeout(() => {
