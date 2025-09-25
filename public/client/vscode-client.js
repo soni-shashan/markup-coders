@@ -2548,8 +2548,146 @@ addEnhancedLiveReloadScript(htmlContent) {
                         if (this.initialized) return;
                         console.log('🚀 Live Server initialized for:', this.currentPage);
                         this.setupNavigation();
+                        // Set up SEB-safe dialog shims so alert/confirm/prompt in preview pages behave
+                        // (SEB blocks native dialogs). We provide non-blocking alert and async confirm/prompt.
+                        try { this.setupDialogShims(); } catch (e) { console.warn('Dialog shims init failed', e); }
                         this.startAutoRefresh();
                         this.initialized = true;
+                    },
+
+                    // Dialog shims: make alert/confirm/prompt work in SEB (non-blocking)
+                    setupDialogShims: function() {
+                        // Avoid re-defining
+                        if (this._dialogShimsInstalled) return;
+
+                        // Helper to create a simple modal in the preview window
+                        const createModal = (title, message, buttons = [{text:'OK',value:true}]) => {
+                            return new Promise(resolve => {
+                                // Remove existing
+                                const existing = document.getElementById('eyecoders-dialog-overlay');
+                                if (existing) existing.remove();
+
+                                const overlay = document.createElement('div');
+                                overlay.id = 'eyecoders-dialog-overlay';
+                                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:10050;';
+
+                                const box = document.createElement('div');
+                                box.style.cssText = 'background:#fff;padding:18px;border-radius:8px;max-width:480px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.3);font-family:Arial, sans-serif;color:#222;';
+
+                                const html = ['<div style="margin-bottom:12px;font-weight:600">' + title + '</div>', '<div style="margin-bottom:12px;white-space:pre-wrap">' + message + '</div>'];
+                                const footerBtns = document.createElement('div');
+                                footerBtns.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
+
+                                buttons.forEach(btn => {
+                                    const b = document.createElement('button');
+                                    b.textContent = btn.text;
+                                    b.style.cssText = 'padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;';
+                                    if (btn.primary) b.style.background = '#0078d4', b.style.color = 'white', b.style.border = 'none';
+                                    b.addEventListener('click', () => {
+                                        overlay.remove();
+                                        resolve(btn.value);
+                                    });
+                                    footerBtns.appendChild(b);
+                                });
+
+                                box.innerHTML = html.join('');
+                                box.appendChild(footerBtns);
+                                overlay.appendChild(box);
+                                document.body.appendChild(overlay);
+                            });
+                        };
+
+                        // Replace alert: non-blocking, shows modal
+                        const originalAlert = window.alert;
+                        window.alert = function(msg) {
+                            try {
+                                if (window.opener && window.opener.editor && typeof window.opener.editor.showAlert === 'function') {
+                                    window.opener.editor.showAlert(String(msg), 'info');
+                                    return;
+                                }
+                            } catch (e) {
+                                // fallthrough
+                            }
+                            // local modal fallback (non-blocking)
+                            createModal('Alert', String(msg), [{text:'OK', value:true, primary:true}]);
+                        };
+
+                        // confirm: synchronous blocking can't be emulated reliably; provide safe sync fallback and an async helper
+                        window.confirm = function(msg) {
+                            console.warn('window.confirm was called in preview. Native confirm may be blocked in SEB. Returning false by default. Use confirmAsync for user interaction.');
+                            return false; // safe default
+                        };
+
+                        window.confirmAsync = function(msg) {
+                            try {
+                                if (window.opener && window.opener.editor && typeof window.opener.editor.showConfirm === 'function') {
+                                    return window.opener.editor.showConfirm(String(msg));
+                                }
+                            } catch (e) { /* ignore */ }
+                            return createModal('Confirm', String(msg), [{text:'Cancel', value:false},{text:'OK', value:true, primary:true}]);
+                        };
+
+                        // prompt: same pattern — fallback returns null synchronously
+                        window.prompt = function(msg, defaultValue) {
+                            console.warn('window.prompt was called in preview. Native prompt may be blocked in SEB. Returning null by default. Use promptAsync for user input.');
+                            return null;
+                        };
+
+                        window.promptAsync = function(msg, defaultValue = '') {
+                            try {
+                                if (window.opener && window.opener.editor && typeof window.opener.editor.showPrompt === 'function') {
+                                    return window.opener.editor.showPrompt(String(msg), defaultValue);
+                                }
+                            } catch (e) { /* ignore */ }
+
+                            // local prompt modal
+                            return new Promise(resolve => {
+                                // remove existing
+                                const existing = document.getElementById('eyecoders-prompt-overlay');
+                                if (existing) existing.remove();
+
+                                const overlay = document.createElement('div');
+                                overlay.id = 'eyecoders-prompt-overlay';
+                                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:10050;';
+
+                                const box = document.createElement('div');
+                                box.style.cssText = 'background:#fff;padding:18px;border-radius:8px;max-width:560px;width:92%;box-shadow:0 8px 40px rgba(0,0,0,0.3);font-family:Arial, sans-serif;color:#222;';
+
+                                const label = document.createElement('div');
+                                label.style.cssText = 'margin-bottom:8px;font-weight:600';
+                                label.textContent = msg;
+
+                                const input = document.createElement('input');
+                                input.type = 'text';
+                                input.value = defaultValue || '';
+                                input.style.cssText = 'width:100%;padding:8px;margin-bottom:12px;border:1px solid #ccc;border-radius:6px;';
+
+                                const footer = document.createElement('div');
+                                footer.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
+
+                                const cancelBtn = document.createElement('button');
+                                cancelBtn.textContent = 'Cancel';
+                                cancelBtn.style.cssText = 'padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;';
+                                cancelBtn.addEventListener('click', () => { overlay.remove(); resolve(null); });
+
+                                const okBtn = document.createElement('button');
+                                okBtn.textContent = 'OK';
+                                okBtn.style.cssText = 'padding:8px 12px;border-radius:6px;border:1px solid #0078d4;background:#0078d4;color:#fff;cursor:pointer;';
+                                okBtn.addEventListener('click', () => { const v = input.value; overlay.remove(); resolve(v); });
+
+                                footer.appendChild(cancelBtn);
+                                footer.appendChild(okBtn);
+
+                                box.appendChild(label);
+                                box.appendChild(input);
+                                box.appendChild(footer);
+                                overlay.appendChild(box);
+                                document.body.appendChild(overlay);
+                                input.focus();
+                            });
+                        };
+
+                        this._dialogShimsInstalled = true;
                     },
                     
                     // Safely navigate by replacing head/body parts instead of document.write
