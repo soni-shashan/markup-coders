@@ -4442,20 +4442,30 @@ getCurrentPageFromUrl() {
 
     async saveAllFiles() {
         this.showAutoSaveIndicator('saving');
-        
+
         try {
-            // Mark all files as saved
-            for (const [path, tabInfo] of this.openTabs) {
-                tabInfo.modified = false;
+            const ok = await this.autoSaveProject();
+            if (ok) {
+                // Mark all files/tabs as saved only after successful server save
+                for (const [path, file] of this.fileSystem.files) {
+                    if (file.modified) file.modified = false;
+                }
+                for (const [path, tabInfo] of this.openTabs) {
+                    tabInfo.modified = false;
+                }
+
+                this.renderFileTree();
+                this.renderTabs();
+                this.showAutoSaveIndicator('success');
+            } else {
+                this.showAutoSaveIndicator('changed');
+                this.showAlert('Auto-save failed. Your changes were not saved to the server.', 'error');
             }
-            
-            await this.autoSaveProject();
-            this.renderTabs();
-            this.showAutoSaveIndicator('success');
-            
+
         } catch (error) {
             console.error('Save error:', error);
             this.showAlert('Error saving files: ' + error.message, 'error');
+            this.showAutoSaveIndicator('changed');
         }
     }
 
@@ -4592,12 +4602,34 @@ getCurrentPageFromUrl() {
                 })
             });
             
-            if (response.ok) {
-                this.showAutoSaveIndicator('success');
+            // Try to parse JSON response for structured result
+            let result = null;
+            try {
+                result = await response.json();
+            } catch (e) {
+                // not JSON
             }
+
+            const savedOk = (result && result.success) || response.ok;
+            if (savedOk) {
+                // On successful save, clear modified flags and update UI
+                for (const [path, file] of this.fileSystem.files) {
+                    if (file.modified) file.modified = false;
+                }
+                for (const [path, tabInfo] of this.openTabs) {
+                    tabInfo.modified = false;
+                }
+                this.renderFileTree();
+                this.renderTabs();
+                this.showAutoSaveIndicator('success');
+                return true;
+            }
+
+            return false;
             
         } catch (error) {
             console.error('Auto-save error:', error);
+            return false;
         }
     }
 
